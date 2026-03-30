@@ -33,13 +33,27 @@ ManoSetu provides:
 * 🧑‍🏫 Peer mentorship system
 * 🤖 AI-based pattern detection (early signals)
 * 📊 NGO analytics dashboard
-* 🌐 Multi-language support (planned)
-* 🧑‍🤝‍🧑 **Smart Buddy Support System**
 
-  * Matches users anonymously with peers facing similar challenges
-  * Enables daily check-ins and mutual encouragement
-  * AI ensures safe and positive interactions
-  * Helps reduce loneliness and builds meaningful connections
+### 🧑‍🤝‍🧑 Smart Buddy Support System
+
+* Matches users anonymously with peers facing similar challenges
+* Enables daily check-ins and mutual encouragement
+* AI ensures safe and positive interactions
+* Helps reduce loneliness and builds meaningful connections
+
+### 🎮 Gamified Wellness Activities
+
+* Interactive mini-games for stress relief and relaxation
+* Activities like breathing games, focus challenges, and mood-based tasks
+* Rewards system (points, badges, streaks) to encourage consistency
+* Makes mental wellness engaging and less intimidating
+
+### 🌐 Multi-Language Support
+
+* Supports multiple Indian languages for better accessibility
+* Planned languages: Hindi, Telugu, Tamil, and more
+* Helps users express emotions comfortably in their native language
+* Improves inclusivity across diverse communities
 
 ---
 
