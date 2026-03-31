@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: false }, // Optional for under-15 privacy
   password: { type: String, required: true },
   ageGroup: { type: String, default: 'teens' },
-  role: { type: String, default: 'user', enum: ['user', 'doctor', 'admin'] },
+  role: { type: String, default: 'user', enum: ['user', 'doctor', 'admin', 'volunteer'] },
   token: { type: String }
 }, { timestamps: true });
 

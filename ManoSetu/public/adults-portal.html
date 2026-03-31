@@ -174,6 +174,27 @@
             document.getElementById('greeting').textContent = 'Good evening, ' + name + '.';
         }
 
+        // --- Real Gemini AI Chat Logic ---
+        async function fetchChatHistory() {
+            try {
+                const res = await fetch('/api/chat/history');
+                const data = await res.json();
+                if (data.success && data.history.length > 0) {
+                    const chatHistory = document.getElementById('chat-history');
+                    chatHistory.innerHTML = '';
+                    data.history.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = `msg ${msg.role === 'user' ? 'user' : 'ai'}`;
+                        div.innerText = msg.text;
+                        chatHistory.appendChild(div);
+                    });
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                }
+            } catch (err) {
+                console.error('History fetch error:', err);
+            }
+        }
+
         async function sendMsg() {
             const inputField = document.getElementById('chat-input');
             const message = inputField.value.trim();
@@ -181,6 +202,7 @@
 
             const chatHistory = document.getElementById('chat-history');
             
+            // 1. Append User Message
             const userDiv = document.createElement('div');
             userDiv.className = 'msg user';
             userDiv.innerText = message;
@@ -188,26 +210,38 @@
             inputField.value = '';
             chatHistory.scrollTop = chatHistory.scrollHeight;
 
-            setTimeout(() => {
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'msg ai';
-                aiDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
-                chatHistory.appendChild(aiDiv);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
+            // 2. Show Processing State
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg ai';
+            aiDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ManoSetu Assistant is analyzing your reflection...';
+            chatHistory.appendChild(aiDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
 
-                setTimeout(() => {
-                    const lc = message.toLowerCase();
-                    let reply = "Thank you for sharing that. It sounds like you're carrying a significant cognitive load. Let's document this in your private journal so Dr. Jenkins can review it.";
-                    if (lc.includes("work") || lc.includes("boss") || lc.includes("deadline")) {
-                        reply = "Workplace stress often triggers our 'all-or-nothing' cognitive distortions. Are you able to identify one boundary you can set tonight to help compartmentalize this stress?";
-                    } else if (lc.includes("anxious") || lc.includes("panic")) {
-                        reply = "I understand. Let's ground ourselves. Try to locate five things in the room you can see, four things you can touch, and three things you can hear. Take a deep, slow breath.";
-                    }
-                    aiDiv.innerHTML = reply;
-                    chatHistory.scrollTop = chatHistory.scrollHeight;
-                }, 1500);
-            }, 500);
+            try {
+                // 3. Call Gemini API
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    aiDiv.innerText = data.response;
+                } else {
+                    aiDiv.innerText = "I encountered a minor cognitive block. Please try again or rephrase your thought.";
+                }
+            } catch (err) {
+                aiDiv.innerText = "Network baseline disconnected. Please check your connectivity.";
+            } finally {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
         }
+
+        // Initialize Chat
+        fetchChatHistory();
     </script>
+
+    <script src="/lang.js"></script>
 </body>
 </html>

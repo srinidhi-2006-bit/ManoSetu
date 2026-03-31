@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManoSetu — Volunteer Dashboard</title>
+    <meta name="description" content="Volunteer portal for ManoSetu — monitor youth wellbeing, manage interventions, and track regional impact.">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <script>
+        const token = localStorage.getItem('x-session-token');
+        if (!token) window.location.href = '/auth.html';
+        // Inject token into all API requests
+        const _origFetch = window.fetch;
+        window.fetch = function() {
+            let [url, cfg] = arguments;
+            if (typeof url === 'string' && url.startsWith('/api/') && !url.startsWith('/api/auth')) {
+                cfg = cfg || {}; cfg.headers = cfg.headers || {};
+                cfg.headers['x-session-token'] = localStorage.getItem('x-session-token') || '';
+            }
+            return _origFetch(url, cfg);
+        };
+    </script>
+    <style>
+        :root {
+            --purple: #7c3aed;
+            --purple-light: #ede9fe;
+            --pink: #ec4899;
+            --teal: #0d9488;
+            --teal-light: #f0fdfa;
+            --orange: #f97316;
+            --red: #ef4444;
+            --red-light: #fef2f2;
+            --green: #10b981;
+            --green-light: #ecfdf5;
+            --amber: #f59e0b;
+            --amber-light: #fffbeb;
+            --blue: #3b82f6;
+            --bg: #f5f4f0;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e9e7e2;
+            --sidebar-w: 220px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text); }
+        body { display: flex; min-height: 100vh; }
+
+        /* ── SIDEBAR ───────────────────────────────────────── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            top: 0; left: 0;
+            z-index: 100;
+            padding: 0;
+            overflow-y: auto;
+            transition: transform 0.3s;
+        }
+        .sidebar-brand {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--purple);
+            text-decoration: none;
+            display: block;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-section {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 14px 20px 4px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { color: var(--purple); background: var(--purple-light); }
+        .nav-item.active { color: var(--purple); background: var(--purple-light); border-left-color: var(--purple); font-weight: 600; }
+        .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px; }
+
+        /* ── MAIN ──────────────────────────────────────────── */
+        .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+        /* ── TOPBAR ────────────────────────────────────────── */
+        .topbar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            flex-wrap: wrap;
+        }
+        .topbar-text { flex: 1; min-width: 200px; }
+        .topbar-title { font-family: 'DM Serif Display', serif; font-size: 20px; line-height: 1.1; }
+        .topbar-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .pill:hover { border-color: var(--purple); color: var(--purple); }
+        .btn-export {
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 11.5px;
+            font-weight: 600;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+        }
+        .btn-export:hover { background: #6d28d9; }
+        .topbar-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* ── CONTENT ───────────────────────────────────────── */
+        .content { padding: 24px 28px; flex: 1; }
+
+        /* ── KPI CARDS ─────────────────────────────────────── */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .kpi-card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.07); }
+        .kpi-badge {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .kpi-badge .dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+        .b-green { color: var(--green); } .b-green .dot { background: var(--green); }
+        .b-red   { color: var(--red);   } .b-red .dot   { background: var(--red); }
+        .b-amber { color: var(--amber); } .b-amber .dot { background: var(--amber); }
+        .b-blue  { color: var(--blue);  } .b-blue .dot  { background: var(--blue); }
+        .b-teal  { color: var(--teal);  } .b-teal .dot  { background: var(--teal); }
+        .kpi-icon { font-size: 20px; margin-bottom: 4px; }
+        .kpi-val  { font-size: 28px; font-weight: 800; line-height: 1; color: var(--text); margin-bottom: 3px; transition: all 0.4s; }
+        .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+        .kpi-delta { font-size: 10.5px; font-weight: 500; color: var(--text-muted); }
+        .kpi-delta.up { color: var(--green); } .kpi-delta.down { color: var(--red); }
+        .mini-bar { height: 3px; background: var(--bg); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+        .mini-bar-fill { height: 100%; border-radius: 2px; width: 0; transition: width 1.2s ease; }
+
+        /* ── CARD ──────────────────────────────────────────── */
+        .card {
+            background: var(--card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 14px 20px 10px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+        }
+        .card-title   { font-size: 13.5px; font-weight: 700; }
+        .card-sub     { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+        .card-link    { font-size: 11.5px; font-weight: 600; color: var(--purple); cursor: pointer; white-space: nowrap; }
+        .card-body    { padding: 18px 20px; }
+
+        /* ── MAIN GRID ─────────────────────────────────────── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+        .left-col  { display: flex; flex-direction: column; gap: 16px; }
+        .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+        /* ── CANVAS CHARTS ─────────────────────────────────── */
+        .chart-wrap { padding: 12px 18px 16px; position: relative; }
+        .chart-legend {
+            display: flex; gap: 14px; margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+        .legend-dot  { width: 8px; height: 8px; border-radius: 50%; }
+        canvas { display: block; width: 100% !important; }
+
+        /* Empty chart state */
+        .chart-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 160px;
+            color: var(--text-muted);
+            font-size: 13px;
+            gap: 8px;
+        }
+        .chart-empty .empty-icon { font-size: 32px; opacity: 0.4; }
+
+        /* ── WELLBEING RING ────────────────────────────────── */
+        .wi-wrap { display: flex; flex-direction: column; align-items: center; padding: 18px; }
+        .wi-ring-wrap { position: relative; width: 100px; height: 100px; margin-bottom: 10px; }
+        .wi-canvas { width: 100px !important; height: 100px !important; }
+        .wi-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .wi-score { font-size: 24px; font-weight: 800; color: var(--teal); }
+        .wi-max   { font-size: 10px; color: var(--text-muted); }
+        .wi-sub   { font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 14px; }
+        .wi-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .wi-stat  { background: var(--bg); border-radius: 10px; padding: 10px; text-align: center; }
+        .wi-stat-val   { font-size: 20px; font-weight: 800; }
+        .wi-stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .c-red   { color: var(--red); }
+        .c-amber { color: var(--amber); }
+
+        /* ── MOOD DISTRIBUTION ─────────────────────────────── */
+        .mood-bars { display: flex; flex-direction: column; gap: 10px; }
+        .mood-bar-row { display: flex; align-items: center; gap: 10px; }
+        .mood-bar-label { font-size: 11px; width: 70px; flex-shrink: 0; color: var(--text-muted); }
+        .mood-bar-track { flex: 1; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+        .mood-bar-fill  { height: 100%; border-radius: 4px; width: 0; transition: width 1s ease; }
+        .mood-bar-count { font-size: 11px; font-weight: 700; width: 24px; text-align: right; flex-shrink: 0; }
+
+        /* ── ALERT LIST ────────────────────────────────────── */
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .alert-item:last-child { border-bottom: none; }
+        .alert-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .dot-red   { background: var(--red);   box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+        .dot-amber { background: var(--amber); }
+        .dot-green { background: var(--green); }
+        .alert-tx  { flex: 1; }
+        .alert-tx .title { font-size: 12px; font-weight: 600; margin-bottom: 1px; }
+        .alert-tx .sub   { font-size: 10.5px; color: var(--text-muted); }
+        .badge {
+            font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+            white-space: nowrap; align-self: flex-start;
+        }
+        .badge-red   { background: var(--red-light);   color: var(--red); }
+        .badge-amber { background: var(--amber-light);  color: var(--amber); }
+        .badge-green { background: var(--green-light);  color: var(--green); }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-align: center;
+            gap: 6px;
+        }
+        .empty-icon { font-size: 28px; opacity: 0.35; }
+
+        /* ── ACTIONS GRID ──────────────────────────────────── */
+        .actions-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px 18px 16px; }
+        .action-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .action-btn:hover { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+        .action-btn .ab-icon  { font-size: 20px; margin-bottom: 6px; }
+        .action-btn .ab-label { font-size: 11.5px; font-weight: 600; }
+
+        /* ── REGIONS ───────────────────────────────────────── */
+        .regions-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .region-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            transition: all 0.2s;
+        }
+        .region-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.07); }
+        .region-name  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 3px; }
+        .region-badge { display: inline-block; font-size: 8.5px; font-weight: 700; padding: 2px 6px; border-radius: 8px; text-transform: uppercase; margin-bottom: 8px; }
+        .rb-a { background:#d1fae5;color:#065f46; }
+        .rb-b { background:#dbeafe;color:#1e40af; }
+        .rb-c { background:#fffbeb;color:#92400e; }
+        .rb-d { background:#ffe4e6;color:#9f1239; }
+        .rb-e { background:#f3f4f6;color:#374151; }
+        .region-score { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+        .region-detail { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+        .region-delta { font-size: 9.5px; font-weight: 600; margin-top: 5px; }
+
+        /* ── LOADING SKELETON ──────────────────────────────── */
+        .skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+        @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+
+        /* ── SCROLLBAR ─────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.2); border-radius:3px; }
+
+        /* ── RESPONSIVE ────────────────────────────────────── */
+        @media (max-width:1200px)  { .kpi-row { grid-template-columns: repeat(3,1fr); } .regions-grid { grid-template-columns: repeat(3,1fr); } }
+        @media (max-width:980px)   { .main-grid { grid-template-columns:1fr; } }
+        @media (max-width:780px)   { .kpi-row { grid-template-columns: repeat(2,1fr); } .regions-grid { grid-template-columns: repeat(2,1fr); } .actions-row { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width:640px)   {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .kpi-row { grid-template-columns: 1fr 1fr; }
+            .content { padding: 16px; }
+            .topbar { padding: 10px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <a href="/index.html" class="sidebar-brand">🌱 ManoSetu</a>
+
+    <div class="sidebar-section">Main</div>
+    <a class="nav-item active" onclick="switchView('dashboard',this)"><span>📊</span> Dashboard</a>
+    <a class="nav-item" onclick="switchView('interventions',this)"><span>🚨</span> Interventions</a>
+    <a class="nav-item" onclick="switchView('sessions',this)"><span>🗓️</span> My Sessions</a>
+
+    <div class="sidebar-section">Reports</div>
+    <a class="nav-item" onclick="switchView('trends',this)"><span>📈</span> Wellbeing Trends</a>
+    <a class="nav-item" onclick="switchView('moods',this)"><span>😊</span> Mood Insights</a>
+    <a class="nav-item" onclick="switchView('resources',this)"><span>📚</span> Resources</a>
+
+    <div class="sidebar-footer">
+        <a class="nav-item" onclick="switchView('settings',this)"><span>⚙️</span> Settings</a>
+        <a class="nav-item" style="color:#ef4444;" onclick="logout()"><span>🚪</span> Sign Out</a>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-text">
+            <div class="topbar-title">Youth Wellbeing Network
+                <span style="font-family:'Sora',sans-serif;font-size:12px;font-weight:400;color:var(--text-muted);">— Field Operations</span>
+            </div>
+            <div class="topbar-sub" id="topbar-sub">Loading…</div>
+        </div>
+        <div class="pill">🌍 All Regions</div>
+        <div class="pill" id="lastRefreshed">📅 Refreshing…</div>
+        <button class="btn-export" onclick="exportReport()">📄 Export</button>
+        <div class="topbar-avatar" id="vol-avatar">V</div>
+    </div>
+
+    <div class="content">
+
+        <!-- ── DASHBOARD VIEW ─────────────────────── -->
+        <div id="view-dashboard" class="view-panel">
+
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:3px;">Programme Overview</h2>
+            <p style="font-size:11.5px;color:var(--text-muted);margin-bottom:18px;" id="overview-sub">Monitoring youth wellbeing · Data updates in real time</p>
+
+            <!-- KPI CARDS -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-badge b-green"><span class="dot"></span>Active</div>
+                    <div class="kpi-icon">👥</div>
+                    <div class="kpi-val" id="kpi-youth">0</div>
+                    <div class="kpi-label">Youth Impacted</div>
+                    <div class="kpi-delta" id="kpi-youth-d">No registrations yet</div>
+                    <div class="mini-bar"><div class="mini-bar-fill" id="bar-youth" style="background:var(--green)"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-badge b-red"><span class="dot"></span>Critical</div>
+                    <div class="kpi-icon">⚠️</div>
+                    <div class="kpi-val" id="kpi-risk">0</div>
+                    <div class="kpi-label">High-Risk Cases</div>
+                    <div class="kpi-delta" id="kpi-risk-d">No SOS events yet</div>
+                    <div class="mini-bar"><div class="mini-bar-fill" id="bar-risk" style="background:var(--red)"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-badge b-amber"><span class="dot"></span>Pending</div>
+                    <div class="kpi-icon">🔔</div>
+                    <div class="kpi-val" id="kpi-alerts">0</div>
+                    <div class="kpi-label">Active Alerts</div>
+                    <div class="kpi-delta" id="kpi-alerts-d">None active</div>
+                    <div class="mini-bar"><div class="mini-bar-fill" id="bar-alerts" style="background:var(--amber)"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-badge b-blue"><span class="dot"></span>Score</div>
+                    <div class="kpi-icon">💙</div>
+                    <div class="kpi-val" id="kpi-wi">0</div>
+                    <div class="kpi-label">Wellbeing Index</div>
+                    <div class="kpi-delta" id="kpi-wi-d">Log moods to generate score</div>
+                    <div class="mini-bar"><div class="mini-bar-fill" id="bar-wi" style="background:var(--blue)"></div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-badge b-teal"><span class="dot"></span>Sessions</div>
+                    <div class="kpi-icon">📋</div>
+                    <div class="kpi-val" id="kpi-moods">0</div>
+                    <div class="kpi-label">Mood Check-ins</div>
+                    <div class="kpi-delta" id="kpi-moods-d">No logs yet</div>
+                    <div class="mini-bar"><div class="mini-bar-fill" id="bar-moods" style="background:var(--teal)"></div></div>
+                </div>
+            </div>
+
+            <!-- MAIN GRID -->
+            <div class="main-grid">
+                <!-- LEFT -->
+                <div class="left-col">
+                    <!-- Wellbeing Trend -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Wellbeing Trend — Last 30 Days</div>
+                                <div class="card-sub">Average mood score per day (auto-updates as moods are logged)</div>
+                            </div>
+                        </div>
+                        <div class="chart-wrap">
+                            <div class="chart-legend">
+                                <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Wellbeing Score</div>
+                                <div class="legend-item"><div class="legend-dot" style="background:var(--red);opacity:0.5"></div>At-Risk (SOS)</div>
+                            </div>
+                            <canvas id="trend-chart" height="160"></canvas>
+                            <div class="chart-empty" id="trend-empty">
+                                <div class="empty-icon">📊</div>
+                                <div>No mood data yet. Youth need to log their moods to generate this chart.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Session Bar Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Session Activity — Last 7 Days</div>
+                                <div class="card-sub">Logins + mood check-ins per day</div>
+                            </div>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="bar-chart" height="130"></canvas>
+                            <div class="chart-empty" id="bar-empty">
+                                <div class="empty-icon">📅</div>
+                                <div>No session activity this week yet.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="right-col">
+                    <!-- Wellbeing Index Ring -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Wellbeing Index</div>
+                        </div>
+                        <div class="wi-wrap">
+                            <div class="wi-ring-wrap">
+                                <canvas class="wi-canvas" id="ring-chart" width="100" height="100"></canvas>
+                                <div class="wi-label">
+                                    <div class="wi-score" id="wi-score-label">0</div>
+                                    <div class="wi-max">/100</div>
+                                </div>
+                            </div>
+                            <div class="wi-sub" id="wi-sub-label">Log moods to generate score</div>
+                            <div class="wi-stats">
+                                <div class="wi-stat">
+                                    <div class="wi-stat-val c-red" id="wi-risk">0</div>
+                                    <div class="wi-stat-label">High risk</div>
+                                </div>
+                                <div class="wi-stat">
+                                    <div class="wi-stat-val c-amber" id="wi-alerts">0</div>
+                                    <div class="wi-stat-label">Alerts</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intervention Alerts -->
+                    <div class="card" style="flex:1;">
+                        <div class="card-header">
+                            <div class="card-title">Intervention Alerts</div>
+                            <a class="card-link" onclick="switchView('interventions',document.querySelectorAll('.nav-item')[1])">Show All →</a>
+                        </div>
+                        <div id="alerts-list" class="alert-list">
+                            <div class="empty-state">
+                                <div class="empty-icon">🔔</div>
+                                <div>No active alerts.<br>SOS events will appear here.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="card" style="margin-bottom:22px;">
+                <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+                <div class="actions-row">
+                    <a class="action-btn" href="/booking.html"><div class="ab-icon">🗓️</div><div class="ab-label">Book Session</div></a>
+                    <a class="action-btn" href="/wellness.html"><div class="ab-icon">😊</div><div class="ab-label">Log a Mood</div></a>
+                    <a class="action-btn" href="/community.html"><div class="ab-icon">💬</div><div class="ab-label">Safe Board</div></a>
+                    <a class="action-btn" onclick="exportReport()"><div class="ab-icon">📄</div><div class="ab-label">Export Report</div></a>
+                </div>
+            </div>
+
+            <!-- MOOD DISTRIBUTION -->
+            <div class="card" style="margin-bottom:22px;">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Mood Distribution</div>
+                        <div class="card-sub">Breakdown of all check-ins across registered youth</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="mood-dist" class="mood-bars">
+                        <div class="empty-state" style="padding:16px 0;">
+                            <div class="empty-icon">📉</div>
+                            <div>No moods logged yet.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /view-dashboard -->
+
+        <!-- ── INTERVENTIONS VIEW ──────────────────── -->
+        <div id="view-interventions" class="view-panel" style="display:none;">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:16px;">Interventions</h2>
+            <div class="card">
+                <div class="card-header"><div class="card-title">🚨 All Active Alerts</div></div>
+                <div id="all-alerts-list" class="alert-list">
+                    <div class="empty-state"><div class="empty-icon">✅</div><div>No active SOS alerts. Great news!</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SESSIONS VIEW ──────────────────────── -->
+        <div id="view-sessions" class="view-panel" style="display:none;">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:8px;">My Sessions</h2>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">View and manage your scheduled volunteer support sessions.</p>
+            <a href="/booking.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--purple);color:white;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px;">🗓️ Book New Session</a>
+        </div>
+
+        <!-- ── TRENDS VIEW ────────────────────────── -->
+        <div id="view-trends" class="view-panel" style="display:none;">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:8px;">Wellbeing Trends</h2>
+            <p style="color:var(--text-muted);font-size:13px;">Detailed trend analytics are shown on the main Dashboard once mood data is collected.</p>
+        </div>
+
+        <!-- ── MOODS VIEW ─────────────────────────── -->
+        <div id="view-moods" class="view-panel" style="display:none;">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:8px;">Mood Insights</h2>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Overall mood distribution across all youth check-ins.</p>
+            <div class="card"><div class="card-body"><div id="mood-dist-2" class="mood-bars"></div></div></div>
+        </div>
+
+        <!-- ── RESOURCES VIEW ─────────────────────── -->
+        <div id="view-resources" class="view-panel" style="display:none;">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:8px;">Resources</h2>
+            <p style="color:var(--text-muted);font-size:13px;">Training materials, guidelines, and intervention playbooks.</p>
+        </div>
+
+        <!-- ── SETTINGS VIEW ─────────────────────── -->
+        <div id="view-settings" class="view-panel" style="display:none;">
+            <h2 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:8px;">Settings</h2>
+            <p style="color:var(--text-muted);font-size:13px;">Account preferences and notification settings.</p>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /main-content -->
+
+<script>
+// ── Globals ────────────────────────────────────────────────────────────────
+const username  = localStorage.getItem('manosetu-username') || 'Volunteer';
+let lastData    = null;
+let trendTimer  = null;
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.getElementById('vol-avatar').textContent  = username.charAt(0).toUpperCase();
+document.getElementById('topbar-sub').textContent  = `Signed in as ${username} · Live data`;
+
+// ── View switcher ──────────────────────────────────────────────────────────
+function switchView(id, el) {
+    document.querySelectorAll('.view-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('view-' + id).style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+}
+
+function logout() { localStorage.clear(); window.location.href = '/auth.html'; }
+function exportReport() { alert('Generating PDF report… (feature coming soon)'); }
+
+// ── Animate count up ───────────────────────────────────────────────────────
+function animateCount(el, target, duration = 800) {
+    const start = parseInt(el.textContent) || 0;
+    if (start === target) return;
+    const range = target - start;
+    const step  = duration / Math.abs(range || 1);
+    let current = start;
+    const dir   = range > 0 ? 1 : -1;
+    const timer = setInterval(() => {
+        current += dir;
+        el.textContent = current;
+        if (current === target) clearInterval(timer);
+    }, step);
+}
+
+// ── Draw ring chart ────────────────────────────────────────────────────────
+function drawRing(score) {
+    const canvas = document.getElementById('ring-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cx  = 50, cy = 50, r = 40;
+    const pct = score / 100;
+
+    ctx.clearRect(0, 0, 100, 100);
+
+    // Track
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, Math.PI * 1.5);
+    ctx.strokeStyle = '#e9e7e2';
+    ctx.lineWidth = 10;
+    ctx.lineCap  = 'round';
+    ctx.stroke();
+
+    // Fill
+    if (pct > 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+        ctx.strokeStyle = '#0d9488';
+        ctx.lineWidth = 10;
+        ctx.lineCap  = 'round';
+        ctx.stroke();
+    }
+
+    document.getElementById('wi-score-label').textContent = score;
+    document.getElementById('wi-sub-label').textContent   =
+        score === 0 ? 'Log moods to generate score'
+        : score >= 70 ? `${score}/100 — Positive trend ▲`
+        : score >= 40 ? `${score}/100 — Moderate`
+        : `${score}/100 — Needs attention`;
+}
+
+// ── Draw trend line chart ──────────────────────────────────────────────────
+function drawTrend(trend) {
+    const canvas = document.getElementById('trend-chart');
+    const empty  = document.getElementById('trend-empty');
+    const scores = trend.map(d => d.score).filter(s => s !== null);
+
+    if (scores.length === 0) {
+        canvas.style.display = 'none';
+        empty.style.display  = 'flex';
+        return;
+    }
+    canvas.style.display = 'block';
+    empty.style.display  = 'none';
+
+    // Responsive width
+    canvas.width  = canvas.offsetWidth || 600;
+    canvas.height = 160;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const W  = canvas.width;
+    const H  = canvas.height;
+    const pad = { top: 10, right: 16, bottom: 28, left: 28 };
+    const iW  = W - pad.left - pad.right;
+    const iH  = H - pad.top - pad.bottom;
+    const n   = trend.length;
+
+    const maxScore = 100;
+    const x = (i) => pad.left + (i / (n - 1)) * iW;
+    const y = (s) => pad.top + iH - (s / maxScore) * iH;
+
+    // Grid lines
+    ctx.strokeStyle = '#e9e7e2';
+    ctx.lineWidth   = 1;
+    [25, 50, 75, 100].forEach(v => {
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y(v));
+        ctx.lineTo(pad.left + iW, y(v));
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px Sora, sans-serif';
+        ctx.fillText(v, 2, y(v) + 3);
+    });
+
+    // Build point list (skip null)
+    const points = trend.map((d, i) => d.score !== null ? { x: x(i), y: y(d.score) } : null);
+
+    // Teal gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + iH);
+    grad.addColorStop(0, 'rgba(13,148,136,0.18)');
+    grad.addColorStop(1, 'rgba(13,148,136,0)');
+
+    ctx.beginPath();
+    let started = false;
+    points.forEach((p, i) => {
+        if (!p) return;
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+    });
+    // Close fill to bottom
+    const lastP = [...points].reverse().find(p => p);
+    const firstP = points.find(p => p);
+    if (firstP && lastP) {
+        ctx.lineTo(lastP.x, pad.top + iH);
+        ctx.lineTo(firstP.x, pad.top + iH);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+    }
+
+    // Teal line
+    ctx.beginPath();
+    started = false;
+    points.forEach(p => {
+        if (!p) return;
+        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+        else ctx.lineTo(p.x, p.y);
+    });
+    ctx.strokeStyle = '#0d9488';
+    ctx.lineWidth   = 2.5;
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+
+    // Dots on data points
+    points.forEach(p => {
+        if (!p) return;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#0d9488';
+        ctx.fill();
+    });
+
+    // X-axis labels (show 5 evenly spaced)
+    const labelIdxs = [0, Math.floor((n-1)/4), Math.floor((n-1)/2), Math.floor(3*(n-1)/4), n-1];
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9px Sora,sans-serif';
+    ctx.textAlign = 'center';
+    labelIdxs.forEach(i => {
+        const d = trend[i];
+        if (!d) return;
+        ctx.fillText(d.date.slice(5), x(i), H - 4);
+    });
+}
+
+// ── Draw bar chart ─────────────────────────────────────────────────────────
+function drawBar(weeklyTrend) {
+    const canvas = document.getElementById('bar-chart');
+    const empty  = document.getElementById('bar-empty');
+    const max    = Math.max(...weeklyTrend.map(d => d.count));
+
+    if (max === 0) {
+        canvas.style.display = 'none';
+        empty.style.display  = 'flex';
+        return;
+    }
+    canvas.style.display = 'block';
+    empty.style.display  = 'none';
+
+    canvas.width  = canvas.offsetWidth || 600;
+    canvas.height = 130;
+
+    const ctx  = canvas.getContext('2d');
+    const W    = canvas.width;
+    const H    = canvas.height;
+    const pad  = { top: 8, right: 16, bottom: 24, left: 16 };
+    const n    = weeklyTrend.length;
+    const barW = Math.max(8, (W - pad.left - pad.right) / n * 0.55);
+    const gap  = (W - pad.left - pad.right) / n;
+
+    ctx.clearRect(0, 0, W, H);
+
+    weeklyTrend.forEach((d, i) => {
+        const cx     = pad.left + i * gap + gap / 2;
+        const barH   = d.count > 0 ? Math.max(4, (d.count / max) * (H - pad.top - pad.bottom)) : 0;
+        const barY   = H - pad.bottom - barH;
+
+        // Bar
+        const grad = ctx.createLinearGradient(0, barY, 0, barY + barH);
+        grad.addColorStop(0, '#7c3aed');
+        grad.addColorStop(1, '#ec4899');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(cx - barW / 2, barY, barW, barH, 4);
+        ctx.fill();
+
+        // Count label above bar
+        if (d.count > 0) {
+            ctx.fillStyle = '#475569';
+            ctx.font = 'bold 10px Sora,sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(d.count, cx, barY - 3);
+        }
+
+        // Day label
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '9px Sora,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.label, cx, H - 4);
+    });
+}
+
+// ── Render mood distribution ───────────────────────────────────────────────
+const MOOD_COLORS = {
+    'Very Happy': '#10b981', 'Happy': '#3b82f6',
+    'Neutral': '#f59e0b',    'Sad': '#8b5cf6', 'Angry': '#ef4444'
+};
+
+function renderMoodDist(dist, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const total = Object.values(dist).reduce((s, v) => s + v, 0);
+
+    if (total === 0) {
+        container.innerHTML = `<div class="empty-state" style="padding:16px 0;"><div class="empty-icon">📉</div><div>No moods logged yet.</div></div>`;
+        return;
+    }
+    const moods = ['Very Happy','Happy','Neutral','Sad','Angry'];
+    container.innerHTML = moods.map(mood => {
+        const count = dist[mood] || 0;
+        const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+        return `
+        <div class="mood-bar-row">
+            <span class="mood-bar-label">${mood}</span>
+            <div class="mood-bar-track">
+                <div class="mood-bar-fill" style="background:${MOOD_COLORS[mood]};width:${pct}%"></div>
+            </div>
+            <span class="mood-bar-count" style="color:${MOOD_COLORS[mood]}">${count}</span>
+        </div>`;
+    }).join('');
+}
+
+// ── Render alert list ──────────────────────────────────────────────────────
+function renderAlerts(alerts, containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!alerts || alerts.length === 0) {
+        el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div>No active alerts. Great news!</div></div>`;
+        return;
+    }
+    el.innerHTML = alerts.map(a => {
+        const t  = new Date(a.timestamp);
+        const ts = t.toLocaleString('en-IN', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        return `
+        <div class="alert-item">
+            <div class="alert-dot dot-red"></div>
+            <div class="alert-tx">
+                <div class="title">SOS: ${a.type}</div>
+                <div class="sub">User ${a.userId} · ${ts} · ${a.status}</div>
+            </div>
+            <span class="badge badge-red">${a.status}</span>
+        </div>`;
+    }).join('');
+}
+
+// ── Fetch & render ─────────────────────────────────────────────────────────
+async function fetchAndRender() {
+    try {
+        const res  = await fetch('/api/dashboard/volunteer');
+        const data = await res.json();
+        if (!data.success) return;
+
+        lastData = data;
+        const s = data.stats;
+
+        // Update KPI values with animation
+        const youth  = s.youthImpacted  || 0;
+        const risk   = s.highRiskCases  || 0;
+        const alerts = s.activeAlerts   || 0;
+        const wi     = s.wellbeingIndex || 0;
+        const moods  = s.totalMoodLogs  || 0;
+
+        animateCount(document.getElementById('kpi-youth'),  youth);
+        animateCount(document.getElementById('kpi-risk'),   risk);
+        animateCount(document.getElementById('kpi-alerts'), alerts);
+        animateCount(document.getElementById('kpi-wi'),     wi);
+        animateCount(document.getElementById('kpi-moods'),  moods);
+
+        // Deltas
+        document.getElementById('kpi-youth-d').textContent  = youth  ? `${youth} registered users` : 'No registrations yet';
+        document.getElementById('kpi-risk-d').textContent   = risk   ? `${risk} SOS event${risk!==1?'s':''} total` : 'No SOS events yet';
+        document.getElementById('kpi-alerts-d').textContent = alerts ? `${alerts} needs attention` : 'None active';
+        document.getElementById('kpi-wi-d').textContent     = wi     ? (wi >= 70 ? 'Positive trend ▲' : wi >= 40 ? 'Moderate' : 'Needs attention') : 'Log moods to generate score';
+        document.getElementById('kpi-moods-d').textContent  = moods  ? `${moods} check-in${moods!==1?'s':''}` : 'No logs yet';
+
+        // Mini bar widths (capped at 100%)
+        document.getElementById('bar-youth').style.width  = youth  ? Math.min(100, youth  * 10) + '%' : '0%';
+        document.getElementById('bar-risk').style.width   = risk   ? Math.min(100, risk   * 20) + '%' : '0%';
+        document.getElementById('bar-alerts').style.width = alerts ? Math.min(100, alerts * 10) + '%' : '0%';
+        document.getElementById('bar-wi').style.width     = wi     ? wi + '%' : '0%';
+        document.getElementById('bar-moods').style.width  = moods  ? Math.min(100, moods  * 5)  + '%' : '0%';
+
+        // Wellbeing ring + mini stats
+        drawRing(wi);
+        document.getElementById('wi-risk').textContent   = risk;
+        document.getElementById('wi-alerts').textContent = alerts;
+
+        // Charts
+        if (data.trend) drawTrend(data.trend);
+        if (data.weeklyTrend) drawBar(data.weeklyTrend);
+
+        // Mood distribution
+        if (data.moodDistribution) {
+            renderMoodDist(data.moodDistribution, 'mood-dist');
+            renderMoodDist(data.moodDistribution, 'mood-dist-2');
+        }
+
+        // Alert lists
+        if (data.recentAlerts !== undefined) {
+            renderAlerts(data.recentAlerts, 'alerts-list');
+            renderAlerts(data.recentAlerts, 'all-alerts-list');
+        }
+
+        // Topbar timestamp
+        const now = new Date();
+        document.getElementById('lastRefreshed').textContent = `🕐 Updated ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
+        document.getElementById('overview-sub').textContent  = `Monitoring youth wellbeing · ${youth} user${youth!==1?'s':''} · Auto-refreshes every 30s`;
+
+    } catch (err) {
+        console.warn('Dashboard fetch failed:', err.message);
+    }
+}
+
+// Redraw charts on window resize
+window.addEventListener('resize', () => {
+    if (!lastData) return;
+    if (lastData.trend) drawTrend(lastData.trend);
+    if (lastData.weeklyTrend) drawBar(lastData.weeklyTrend);
+    drawRing(lastData.stats.wellbeingIndex || 0);
+});
+
+// ── Auto-refresh every 30 seconds ─────────────────────────────────────────
+fetchAndRender();
+setInterval(fetchAndRender, 30000);
+</script>
+    <script src="/lang.js"></script>
+</body>
+</html>

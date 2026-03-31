@@ -1,9 +1,17 @@
 /**
- * ManoSetu - Auth Controller (Mongoose)
+ * ManoSetu - Auth Controller
+ * Supports real MongoDB mode and in-memory MOCK_DB mode.
  */
 
 const crypto = require('crypto');
-const User = require('../models/User');
+
+// ── Shared in-memory store ──────────────────────────────────────────────────
+const MOCK = process.env.MOCK_DB === 'true';
+const store = require('../config/store');
+
+function mockFindByUsername(username) {
+  return store.users.get(username.trim().toLowerCase()) || null;
+}
 
 // POST /api/auth/register
 const register = async (req, res, next) => {
@@ -15,22 +23,40 @@ const register = async (req, res, next) => {
     }
 
     const safeUsername = username.trim();
+    const token = crypto.randomBytes(32).toString('hex');
+
+    if (MOCK) {
+      const key = safeUsername.toLowerCase();
+      if (store.users.has(key)) {
+        return res.status(409).json({ success: false, error: 'That username is already taken. Try another!' });
+      }
+      const user = {
+        _id: crypto.randomBytes(8).toString('hex'),
+        username: safeUsername,
+        password,
+        ageGroup: ageGroup || 'teens',
+        role: role || 'user',
+        token,
+        registeredAt: new Date(),
+      };
+      store.users.set(key, user);
+      // Record a session event
+      store.sessionEvents.push({ userId: user._id, ts: new Date() });
+      return res.status(201).json({
+        success: true,
+        message: 'Welcome to ManoSetu!',
+        user: { id: user._id, username: user.username, ageGroup: user.ageGroup, role: user.role },
+        token,
+      });
+    }
+
+    // ── Real DB path ──
+    const User = require('../models/User');
     const existing = await User.findOne({ username: safeUsername });
-    
     if (existing) {
       return res.status(409).json({ success: false, error: 'That username is already taken. Try another!' });
     }
-
-    const token = crypto.randomBytes(32).toString('hex');
-    
-    const user = await User.create({
-      username: safeUsername,
-      password: password, 
-      ageGroup: ageGroup || 'teens',
-      role: role || 'user',
-      token
-    });
-
+    const user = await User.create({ username: safeUsername, password, ageGroup: ageGroup || 'teens', role: role || 'user', token });
     res.status(201).json({
       success: true,
       message: 'Welcome to ManoSetu!',
@@ -51,17 +77,32 @@ const login = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Username and password are required.' });
     }
 
-    const user = await User.findOne({ username: username.trim(), password });
+    const newToken = crypto.randomBytes(32).toString('hex');
 
+    if (MOCK) {
+      const user = mockFindByUsername(username);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ success: false, error: 'Invalid username or password.' });
+      }
+      user.token = newToken;
+      // Record a session event on each login
+      store.sessionEvents.push({ userId: user._id, ts: new Date() });
+      return res.json({
+        success: true,
+        message: 'Welcome back!',
+        user: { id: user._id, username: user.username, ageGroup: user.ageGroup, role: user.role },
+        token: newToken,
+      });
+    }
+
+    // ── Real DB path ──
+    const User = require('../models/User');
+    const user = await User.findOne({ username: username.trim(), password });
     if (!user) {
       return res.status(401).json({ success: false, error: 'Invalid username or password.' });
     }
-
-    // Rotate token on login for better security
-    const newToken = crypto.randomBytes(32).toString('hex');
     user.token = newToken;
     await user.save();
-
     res.json({
       success: true,
       message: 'Welcome back!',
@@ -83,3 +124,4 @@ const getMe = (req, res) => {
 };
 
 module.exports = { register, login, getMe };
+

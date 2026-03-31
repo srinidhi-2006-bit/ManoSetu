@@ -75,49 +75,114 @@
         </div>
 
         <div class="new-post-box">
-            <textarea rows="3" placeholder="Share what's on your mind..."></textarea>
+            <textarea id="postContent" rows="3" placeholder="Share what's on your mind..."></textarea>
             <div class="new-post-actions">
-                <div style="color: #94a3b8; font-size: 13px;">Posting as <strong style="color: #64748b;">Anonymous User</strong></div>
-                <button class="btn-primary" onclick="alert('Post submitted for moderation review.')">Post Securely</button>
+                <div style="color: #94a3b8; font-size: 13px;">Posting as <strong id="userName">Anonymous User</strong></div>
+                <button class="btn-primary" id="btnPost" onclick="submitPost()">Post Securely</button>
             </div>
         </div>
 
-        <div class="feed">
-            <div class="post">
-                <div class="post-header">
-                    <div class="avatar">🦊</div>
-                    <div class="post-meta">
-                        <h4>Anonymous Fox</h4>
-                        <p>2 hours ago</p>
-                    </div>
-                </div>
-                <div class="post-content">
-                    I've been feeling incredibly overwhelmed with school logic lately. Does anyone else get so stressed they just can't start their assignments? How do you break the cycle?
-                </div>
-                <div class="post-actions">
-                    <div class="action-btn">🤍 12 Hugs</div>
-                    <div class="action-btn">💬 4 Replies</div>
-                </div>
-            </div>
-
-            <div class="post">
-                <div class="post-header">
-                    <div class="avatar">🦉</div>
-                    <div class="post-meta">
-                        <h4>Anonymous Owl</h4>
-                        <p>5 hours ago</p>
-                    </div>
-                </div>
-                <div class="post-content">
-                    Just finished my first session with a therapist from the platform. I was so nervous but it actually feels really good to finally talk about things out loud. Highly recommend taking the step if you're on the fence!
-                </div>
-                <div class="post-actions">
-                    <div class="action-btn">🤍 34 Hugs</div>
-                    <div class="action-btn">💬 2 Replies</div>
-                </div>
+        <div id="postFeed" class="feed">
+            <!-- Posts will be loaded here -->
+            <div style="text-align:center; padding:40px; color:#94a3b8;">
+                <p>Loading the safe board...</p>
             </div>
         </div>
     </div>
 
+    <script>
+        const user = JSON.parse(localStorage.getItem('manosetu-user') || '{}');
+        document.getElementById('userName').textContent = user.username ? `Anonymous ${user.username}` : 'Anonymous User';
+
+        async function fetchPosts() {
+            try {
+                const res = await fetch('/api/community/posts');
+                const data = await res.json();
+                if (data.success) {
+                    renderPosts(data.posts);
+                }
+            } catch (err) {
+                console.error('Failed to fetch posts:', err);
+            }
+        }
+
+        function renderPosts(posts) {
+            const feed = document.getElementById('postFeed');
+            if (posts.length === 0) {
+                feed.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><p>No posts yet. Be the first to share!</p></div>';
+                return;
+            }
+
+            feed.innerHTML = posts.map(post => {
+                const date = new Date(post.ts || post.createdAt);
+                const timeAgo = Math.floor((Date.now() - date) / 60000);
+                const timeStr = timeAgo < 1 ? 'Just now' : timeAgo < 60 ? `${timeAgo}m ago` : `${Math.floor(timeAgo/60)}h ago`;
+
+                return `
+                    <div class="post" data-id="${post.id}">
+                        <div class="post-header">
+                            <div class="avatar">${post.authorIcon || '👤'}</div>
+                            <div class="post-meta">
+                                <h4>${post.authorName || 'Anonymous'}</h4>
+                                <p>${timeStr}</p>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            ${post.text || post.content}
+                        </div>
+                        <div class="post-actions">
+                            <div class="action-btn" onclick="giveHug(this)">🤍 ${post.hugsCount || 0} Hugs</div>
+                            <div class="action-btn">💬 ${post.replies ? post.replies.length : (post.answers ? post.answers.length : 0)} Replies</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function submitPost() {
+            const btn = document.getElementById('btnPost');
+            const content = document.getElementById('postContent').value.trim();
+            if (!content) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Posting...';
+
+            try {
+                const res = await fetch('/api/community/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: content })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('postContent').value = '';
+                    fetchPosts(); // Refresh feed
+                } else {
+                    alert(data.error || 'Failed to post.');
+                }
+            } catch (err) {
+                console.error('Post error:', err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Post Securely';
+            }
+        }
+
+        function giveHug(btn) {
+            const current = btn.textContent.match(/\d+/);
+            if (current) {
+                const count = parseInt(current[0]) + 1;
+                btn.innerHTML = `❤️ ${count} Hugs`;
+                btn.style.color = '#ef4444';
+            }
+        }
+
+        // Initialize
+        fetchPosts();
+        // Refresh every 60s
+        setInterval(fetchPosts, 60000);
+    </script>
+
+    <script src="/lang.js"></script>
 </body>
 </html>

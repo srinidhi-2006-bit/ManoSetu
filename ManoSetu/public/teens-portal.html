@@ -27,7 +27,7 @@
         
         /* Modern Glassmorphism Navbar */
         nav { position: fixed; top: 0; left: 0; right: 0; height: 75px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 40px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        .logo { font-weight: 800; font-size: 24px; background: linear-gradient(135deg, var(--accent), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; margin-right: auto; letter-spacing: -0.5px; }
+        .logo { font-weight: 800; font-size: 24px; background: linear-gradient(135deg, var(--accent), var(--neon-pink)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; margin-right: auto; letter-spacing: -0.5px; }
         .nav-links { display: flex; gap: 30px; margin-right: 30px; }
         .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 14px; transition: 0.2s; }
         .nav-links a:hover, .nav-links a.active { color: var(--text-main); text-shadow: none; font-weight: 600; }
@@ -212,7 +212,27 @@
             alert("Starting a 25-minute distraction-free focus block...");
         }
 
-        // --- Mock AI Chat Logic ---
+        // --- Real Gemini AI Chat Logic ---
+        async function fetchChatHistory() {
+            try {
+                const res = await fetch('/api/chat/history');
+                const data = await res.json();
+                if (data.success && data.history.length > 0) {
+                    const chatHistory = document.getElementById('chat-history');
+                    chatHistory.innerHTML = ''; // Clear default
+                    data.history.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = `msg ${msg.role === 'user' ? 'user' : 'ai'}`;
+                        div.innerText = msg.text;
+                        chatHistory.appendChild(div);
+                    });
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                }
+            } catch (err) {
+                console.error('History fetch error:', err);
+            }
+        }
+
         async function sendMsg() {
             const inputField = document.getElementById('chat-input');
             const message = inputField.value.trim();
@@ -220,7 +240,7 @@
 
             const chatHistory = document.getElementById('chat-history');
             
-            // Append User Message
+            // 1. Append User Message
             const userDiv = document.createElement('div');
             userDiv.className = 'msg user';
             userDiv.innerText = message;
@@ -228,31 +248,41 @@
             inputField.value = '';
             chatHistory.scrollTop = chatHistory.scrollHeight;
 
-            // Wait effect
-            setTimeout(() => {
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'msg ai';
-                aiDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Typing...';
-                chatHistory.appendChild(aiDiv);
-                chatHistory.scrollTop = chatHistory.scrollHeight;
+            // 2. Show Typing Indicator
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg ai';
+            aiDiv.id = 'typing-indicator';
+            aiDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ManoSetu Mentor is thinking...';
+            chatHistory.appendChild(aiDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
 
-                // Fake response based on keywords (since proper Gemini API requires backend)
-                setTimeout(() => {
-                    const lc = message.toLowerCase();
-                    let reply = "I hear you. Dealing with that can be super draining. Do you want to try a quick breathing exercise or just vent more?";
-                    if (lc.includes("school") || lc.includes("exam") || lc.includes("test")) {
-                        reply = "Academic pressure is one of the hardest things to handle right now. Remember that a grade doesn't define your worth. Try breaking your studying down into 20-minute chunks to lower the anxiety.";
-                    } else if (lc.includes("friend") || lc.includes("lonely")) {
-                        reply = "Friendship drama or feeling lonely is genuinely painful. It's totally okay to feel hurt. Have you checked out the Safe Board? Realizing others are going through the exact same thing can help feeling less isolated.";
-                    } else if (lc.includes("die") || lc.includes("kill") || lc.includes("suicide")) {
-                        reply = "<b>It sounds like you are in overwhelming pain right now. Please know you are not alone. Please click the SOS button in the top right, or text HOME to 741741 immediately. People care and want to help you stay safe.</b>";
-                        aiDiv.style.border = "1px solid red";
-                    }
-                    aiDiv.innerHTML = reply;
-                    chatHistory.scrollTop = chatHistory.scrollHeight;
-                }, 1500);
-            }, 500);
+            try {
+                // 3. Call Real API
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await res.json();
+                
+                // 4. Update with Gemini Response
+                if (data.success) {
+                    aiDiv.innerText = data.response;
+                } else {
+                    aiDiv.innerText = "I'm sorry, I'm having trouble connecting to my thoughts. Try again?";
+                }
+            } catch (err) {
+                aiDiv.innerText = "Connection lost. Please check your internet.";
+            } finally {
+                aiDiv.removeAttribute('id');
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
         }
+
+        // Initialize Chat
+        fetchChatHistory();
     </script>
+
+    <script src="/lang.js"></script>
 </body>
 </html>

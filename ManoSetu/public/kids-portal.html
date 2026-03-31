@@ -24,8 +24,7 @@
       
       .rainbow-text {
         background: linear-gradient(45deg, #ff0000, #ff7f00, #ffca00, #00cd00, #0000ff, #4b0082, #8b00ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         font-weight: 800;
         font-size: 42px;
         text-align: center;
@@ -256,6 +255,24 @@
                 window.speechSynthesis.speak(ut);
             }
         }
+
+        async function fetchChatHistory() {
+            try {
+                const res = await fetch('/api/chat/history');
+                const data = await res.json();
+                if (data.success && data.history.length > 0) {
+                    const box = document.getElementById('chatBox');
+                    box.innerHTML = ''; // Start fresh
+                    data.history.forEach(msg => {
+                        box.innerHTML += `<div class="msg ${msg.role === 'user' ? 'user' : 'ai'}">${msg.text}</div>`;
+                    });
+                    box.scrollTop = box.scrollHeight;
+                }
+            } catch (err) {
+                console.error('Kids history error:', err);
+            }
+        }
+
         async function sendBuddyMsg() {
             const input = document.getElementById('chatInput');
             const box = document.getElementById('chatBox');
@@ -281,6 +298,9 @@
             }
             box.scrollTop = box.scrollHeight;
         }
+
+        // Initialize Kids Hub
+        fetchChatHistory();
 
         /* ----- Memory Game ----- */
         let flippedCards = [];
@@ -352,5 +372,6 @@
             updateStory();
         }
     </script>
+    <script src="/lang.js"></script>
 </body>
 </html>
