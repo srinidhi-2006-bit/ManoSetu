@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManoSetu - Admin Command Center</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #6C3FC5; /* Deep purple */
+            --primary-light: #EBE5F7;
+            --accent: #2ABFBF; /* Teal */
+            --accent-light: #E2F6F6;
+            --bg-color: #F8F7FF; /* Soft white */
+            --text-dark: #2B2D42;
+            --text-muted: #8D99AE;
+            --card-bg: #FFFFFF;
+            --border: #EDF2F7;
+            --danger: #EF476F;
+            --danger-light: #FDE8ED;
+            --warning: #FFD166;
+            --warning-light: #FFF8E6;
+            --success: #06D6A0;
+            --success-light: #E1F9F2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: 0.3s;
+        }
+
+        .sidebar-brand {
+            padding: 30px 24px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-items { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+
+        .nav-item {
+            padding: 14px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 63, 197, 0.2);
+        }
+
+        .nav-icon { width: 20px; text-align: center; }
+
+        .sidebar-footer { padding: 24px 16px; border-top: 1px solid var(--border); }
+        .admin-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 0 8px; }
+        .admin-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .admin-info h4 { font-size: 14px; margin: 0; color: var(--text-dark); }
+        .admin-info p { font-size: 11px; margin: 0; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+        .nav-item.logout { color: var(--danger); font-weight: 600; }
+        .nav-item.logout:hover { background: var(--danger-light); color: var(--danger); box-shadow: none; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+        }
+
+        .page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .page-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; }
+        .page-desc { color: var(--text-muted); font-size: 14px; margin: 0; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* --- Overview Panel --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 24px; }
+        .stat-card { display: flex; flex-direction: column; }
+        .stat-card .icon-wrap { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px; }
+        .c-primary { background: var(--primary-light); color: var(--primary); }
+        .c-accent { background: var(--accent-light); color: var(--accent); }
+        .c-danger { background: var(--danger-light); color: var(--danger); }
+        .c-warning { background: var(--warning-light); color: var(--warning); }
+        
+        .stat-value { font-size: 32px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+        .stat-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-sub { font-size: 12px; margin-top: 8px; color: var(--text-muted); }
+        .stat-sub strong { color: var(--text-dark); }
+
+        /* CSS Chart */
+        .chart-box { height: 200px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 20px; }
+        .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .bar-bg { width: 100%; height: 150px; background: var(--bg-color); border-radius: 6px 6px 0 0; position: relative; }
+        .bar-fill { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--primary); border-radius: 6px 6px 0 0; transition: height 1s ease; }
+        .day-label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+
+        /* --- Tables --- */
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .table-title { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .table-controls { display: flex; gap: 12px; }
+        
+        .input-box, .select-box { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; font-size: 14px; outline: none; }
+        .input-box:focus, .select-box:focus { border-color: var(--primary); }
+        
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 14px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #5630a1; box-shadow: 0 4px 12px rgba(108,63,197,0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-dark); }
+        .btn-outline:hover { border-color: var(--text-dark); }
+        .btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 6px; }
+
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px; text-align: left; }
+        th { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; border-bottom: 2px solid var(--border); padding-top: 0; }
+        td { font-size: 14px; border-bottom: 1px solid var(--border); color: var(--text-dark); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--bg-color); }
+
+        /* Chips / Badges */
+        .chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; }
+        .chip-kids { background: #E1F9F2; color: #06D6A0; } /* Success/Mint */
+        .chip-youth { background: var(--accent-light); color: var(--accent); }
+        .chip-adult { background: var(--primary-light); color: var(--primary); }
+        .chip-active { background: var(--success-light); color: var(--success); }
+        .chip-inactive { background: var(--border); color: var(--text-muted); }
+        
+        .chip-low { background: var(--warning-light); color: var(--warning); }
+        .chip-med { background: #FFF4E5; color: #F59E0B; } /* Orange */
+        .chip-high { background: var(--danger-light); color: var(--danger); }
+
+        /* --- Skeletons & Empty States --- */
+        .skeleton { background: #e2e8f0; border-radius: 4px; overflow: hidden; position: relative; }
+        .skeleton::after {
+            content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 100% { left: 100%; } }
+        
+        .skeleton-text { height: 16px; margin-bottom: 8px; width: 70%; }
+        .skeleton-block { height: 40px; margin-bottom: 16px; width: 100%; border-radius: 8px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; }
+        .empty-icon { font-size: 48px; color: var(--border); margin-bottom: 16px; }
+        .empty-text { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+
+        /* --- Modal --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card-bg); padding: 32px; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .btn-close { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .btn-close:hover { color: var(--danger); }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+        .form-select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); outline: none; font-family: inherit; }
+
+        /* --- Responsive --- */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <a href="#" class="sidebar-brand"><i class="fa-solid fa-leaf"></i> ManoSetu</a>
+        
+        <nav class="nav-items">
+            <a class="nav-item active" onclick="switchTab(event, 'overview')">
+                <i class="fa-solid fa-chart-pie nav-icon"></i> Overview
+            </a>
+            <a class="nav-item" onclick="switchTab(event, 'users')">
+                <i class="fa-solid fa-users nav-icon"></i> Users
+            </a>
+            <a class="nav-item" onclick="switchTab(event, 'guardians')">
+                <i class="fa-solid fa-link nav-icon"></i> Guardian-Ward Map
+            </a>
+            <a class="nav-item" onclick="switchTab(event, 'flags')">
+                <i class="fa-solid fa-triangle-exclamation nav-icon"></i> Flagged Sessions
+            </a>
+            <a class="nav-item" onclick="switchTab(event, 'health')">
+                <i class="fa-solid fa-server nav-icon"></i> System Health
+            </a>
+            <a class="nav-item" onclick="switchTab(event, 'settings')">
+                <i class="fa-solid fa-gear nav-icon"></i> Settings
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-profile">
+                <div class="admin-avatar">AD</div>
+                <div class="admin-info">
+                    <h4>Admin User</h4>
+                    <p>Super Admin</p>
+                </div>
+            </div>
+            <a class="nav-item logout" onclick="localStorage.clear(); window.location.href='/auth.html'">
+                <i class="fa-solid fa-arrow-right-from-bracket nav-icon"></i> Log out
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- View: Overview -->
+        <div id="view-overview" class="view-panel" style="display: block;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Platform Overview</h1>
+                    <p class="page-desc">High-level insights across ManoSetu portals.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="icon-wrap c-primary"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-value">2,845</div>
+                    <div class="stat-label">Total Registered Users</div>
+                    <div class="stat-sub"><strong>890</strong> Kids · <strong>1,200</strong> Youth · <strong>755</strong> Adults</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-wrap c-accent"><i class="fa-solid fa-comments"></i></div>
+                    <div class="stat-value">142</div>
+                    <div class="stat-label">Active Sessions Today</div>
+                    <div class="stat-sub">Chatbot interactions across all portals</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-wrap c-danger"><i class="fa-solid fa-bell"></i></div>
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">SOS Triggers This Week</div>
+                    <div class="stat-sub">Requires immediate clinical review</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-wrap c-warning"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="stat-value">840</div>
+                    <div class="stat-label">Guardians Linked</div>
+                    <div class="stat-sub">Currently monitoring dependent accounts</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-header" style="margin-bottom: 0;">
+                    <div class="table-title"><i class="fa-solid fa-chart-simple"></i> System Activity (7 Days)</div>
+                </div>
+                <div class="chart-box">
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 40%;"></div></div><span class="day-label">Mon</span></div>
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 60%; background: var(--accent);"></div></div><span class="day-label">Tue</span></div>
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 55%;"></div></div><span class="day-label">Wed</span></div>
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 80%; background: var(--accent);"></div></div><span class="day-label">Thu</span></div>
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 30%;"></div></div><span class="day-label">Fri</span></div>
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 90%; background: var(--accent);"></div></div><span class="day-label">Sat</span></div>
+                    <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="height: 100%;"></div></div><span class="day-label">Sun</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Users -->
+        <div id="view-users" class="view-panel" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">User Management</h1>
+                    <p class="page-desc">Directory of all patients and active statuses.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="table-header">
+                    <div class="table-title">Registered Users</div>
+                    <div class="table-controls">
+                        <input type="text" class="input-box" placeholder="Search by name or UUID..." style="width: 250px;">
+                        <select class="select-box">
+                            <option value="">All Age Groups</option>
+                            <option value="kids">Kids (Under 11)</option>
+                            <option value="youth">Youth (11-17)</option>
+                            <option value="adults">Adults (18+)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-wrap">
+                    <table id="table-users">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age Group</th>
+                                <th>Portal Used</th>
+                                <th>Last Active</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-users">
+                            <!-- Skeleton inserted initially by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+                    <button class="btn btn-outline btn-sm"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                    <button class="btn btn-primary btn-sm">1</button>
+                    <button class="btn btn-outline btn-sm">2</button>
+                    <button class="btn btn-outline btn-sm">Next <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Guardian-Ward Map -->
+        <div id="view-guardians" class="view-panel" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Guardian-Ward Mapping</h1>
+                    <p class="page-desc">Manage parental oversight connections.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('link-modal')"><i class="fa-solid fa-link"></i> Manually Link Record</button>
+            </div>
+
+            <div class="card">
+                <div class="table-wrap">
+                    <table id="table-guardians">
+                        <thead>
+                            <tr>
+                                <th>Guardian Name</th>
+                                <th>Ward Name</th>
+                                <th>Ward Age Group</th>
+                                <th>Linked Since</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-guardians">
+                            <!-- Initially empty state by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Flagged Sessions -->
+        <div id="view-flags" class="view-panel" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Flagged Sessions</h1>
+                    <p class="page-desc">Critical alerts intercepted by the Gemini AI layer or SOS buttons.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-header">
+                    <div class="table-title">System Interventions</div>
+                    <div class="table-controls">
+                        <select class="select-box">
+                            <option value="">Any Severity</option>
+                            <option value="high">High</option>
+                            <option value="med">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select class="select-box">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-wrap">
+                    <table id="table-flags">
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Portal</th>
+                                <th>Trigger Type</th>
+                                <th>Timestamp</th>
+                                <th>Severity</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-flags">
+                            <!-- Skeleton inserted initially by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: System Health -->
+        <div id="view-health" class="view-panel" style="display: none;">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">System Health & APIs</h1>
+                    <p class="page-desc">Infrastructure status controls.</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="card stat-card" style="border: 1px solid var(--success);">
+                    <div class="stat-label">MongoDB Connection</div>
+                    <div class="stat-value" style="color: var(--success); display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-database font-24"></i> Connected
+                    </div>
+                    <div class="stat-sub">Cluster latency: 12ms</div>
+                </div>
+
+                <div class="card stat-card" style="border: 1px solid var(--success);">
+                    <div class="stat-label">Google Gemini API</div>
+                    <div class="stat-value" style="color: var(--success); display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-robot font-24"></i> Active
+                    </div>
+                    <div class="stat-sub">Ping successful (98% confidence)</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-label">Server Uptime</div>
+                    <div class="stat-value" id="uptime-val">99.98%</div>
+                    <div class="stat-sub">Node.js Server running on port 3000</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-label">Last Database Backup</div>
+                    <div class="stat-value" style="font-size: 20px; line-height: 1.6;">Today, 03:00 AM</div>
+                    <div class="stat-sub">Automated AWS S3 dump</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Settings (Placeholder) -->
+        <div id="view-settings" class="view-panel" style="display: none;">
+            <div class="page-header">
+                <div><h1 class="page-title">Platform Settings</h1><p class="page-desc">Configuration options.</p></div>
+            </div>
+            <div class="card empty-state">
+                <div class="empty-icon"><i class="fa-solid fa-gears"></i></div>
+                <div class="empty-text">Configuration settings are restricted to Super Admins.</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Link Guardian -->
+    <div class="modal" id="link-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Link Guardian to Ward</div>
+                <button class="btn-close" onclick="closeModal('link-modal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Select Guardian Account</label>
+                <select class="form-select">
+                    <option>Select an active Guardian...</option>
+                    <option>Guardian_A1 (Alex's Father)</option>
+                    <option>Sarah_M (Liam's Mother)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Select Ward Account</label>
+                <select class="form-select">
+                    <option>Select an underage account...</option>
+                    <option>User_19X (Alex, Kids Portal)</option>
+                    <option>User_44T (Liam, Teens Portal)</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px;">
+                <button class="btn btn-outline" onclick="closeModal('link-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="closeModal('link-modal'); alert('Accounts successfully linked!')">Establish Link</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Tab Switcher
+        function switchTab(event, targetId) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.view-panel').forEach(el => el.style.display = 'none');
+            document.getElementById('view-' + targetId).style.display = 'block';
+
+            // Trigger fetch hooks when tabs open
+            if(targetId === 'users' && !window.usersLoaded) fetchUsers();
+            if(targetId === 'flags' && !window.flagsLoaded) fetchFlags();
+            if(targetId === 'guardians' && !window.guardiansLoaded) fetchGuardians();
+        }
+
+        // Modal Logic
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // --- Skeleton Renderers ---
+        function renderSkeletonRows(tbodyId, rows) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+            for(let i=0; i<rows; i++) {
+                tbody.innerHTML += `<tr><td colspan="6"><div class="skeleton skeleton-block"></div></td></tr>`;
+            }
+        }
+        function renderEmptyState(tbodyId, colspan, message, icon) {
+            document.getElementById(tbodyId).innerHTML = `
+                <tr>
+                    <td colspan="${colspan}">
+                        <div class="empty-state">
+                            <div class="empty-icon">${icon}</div>
+                            <div class="empty-text">${message}</div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // --- Mock API Fetches ---
+        async function fetchUsers() {
+            renderSkeletonRows('tbody-users', 4);
+            // Simulated fetch(/api/admin/users)
+            setTimeout(() => {
+                document.getElementById('tbody-users').innerHTML = `
+                    <tr><td>Liam O.</td><td><span class="chip chip-youth">Youth</span></td><td>Teens Portal</td><td>Today, 11:30 AM</td><td><span class="chip chip-active">Active</span></td><td><button class="btn btn-sm btn-outline">View</button> <button class="btn btn-sm btn-outline"><i class="fa-solid fa-ban"></i></button></td></tr>
+                    <tr><td>Maya S.</td><td><span class="chip chip-kids">Kids</span></td><td>Kids Portal</td><td>Yesterday, 4:15 PM</td><td><span class="chip chip-active">Active</span></td><td><button class="btn btn-sm btn-outline">View</button> <button class="btn btn-sm btn-outline"><i class="fa-solid fa-ban"></i></button></td></tr>
+                    <tr><td>John D.</td><td><span class="chip chip-adult">Adult</span></td><td>Pro Portal</td><td>Oct 20, 9:00 AM</td><td><span class="chip chip-inactive">Inactive</span></td><td><button class="btn btn-sm btn-outline">View</button> <button class="btn btn-sm btn-outline"><i class="fa-solid fa-ban"></i></button></td></tr>
+                `;
+                window.usersLoaded = true;
+            }, 1000);
+        }
+
+        async function fetchFlags() {
+            renderSkeletonRows('tbody-flags', 3);
+            // Simulated fetch(/api/admin/flagged-sessions)
+            setTimeout(() => {
+                document.getElementById('tbody-flags').innerHTML = `
+                    <tr><td>User_82A</td><td>Youth Portal</td><td>High Anxiety Keyword</td><td>Today, 10:15 AM</td><td><span class="chip chip-med">Medium</span></td><td><button class="btn btn-sm btn-primary">Review</button></td></tr>
+                    <tr><td>User_19X</td><td>Kids Portal</td><td>SOS Button</td><td>Yesterday, 8:42 PM</td><td><span class="chip chip-high">High</span></td><td><button class="btn btn-sm btn-primary">Review</button></td></tr>
+                    <tr><td>User_99Z</td><td>Pro Portal</td><td>Repeated Crisis</td><td>Oct 23, 11:45 PM</td><td><span class="chip chip-high">High</span></td><td><button class="btn btn-sm btn-primary">Review</button></td></tr>
+                `;
+                window.flagsLoaded = true;
+            }, 800);
+        }
+
+        async function fetchGuardians() {
+            renderSkeletonRows('tbody-guardians', 2);
+            // Simulated fetch(/api/admin/guardian-ward-map)
+            // Show empty state for demonstration
+            setTimeout(() => {
+                renderEmptyState('tbody-guardians', 5, 'No active guardian-ward mappings found.', '<i class="fa-solid fa-link-slash"></i>');
+                window.guardiansLoaded = true;
+            }, 600);
+        }
+
+    </script>
+</body>
+</html>

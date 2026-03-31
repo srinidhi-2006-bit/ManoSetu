@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManoSetu - Safe Board</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        const token = localStorage.getItem('x-session-token');
+        if (!token && !window.location.pathname.includes('auth.html')) window.location.href = '/auth.html';
+        
+        const originalFetch = window.fetch;
+        window.fetch = async function() {
+            let [resource, config] = arguments;
+            if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/auth')) {
+                config = config || {}; config.headers = config.headers || {};
+                config.headers['x-session-token'] = localStorage.getItem('x-session-token') || '';
+            }
+            return originalFetch(resource, config);
+        };
+    </script>
+    <style>
+        body { font-family: 'Sora', sans-serif; background: #f8f9fc; color: #1a1a2e; margin: 0; padding-top: 80px; }
+        nav { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; align-items: center; padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+        .logo { font-weight: 800; font-size: 24px; color: #7c3aed; text-decoration: none; margin-right: auto; }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-links a { text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px; }
+        .nav-links a.active { color: #7c3aed; }
+        .btn-sos { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 20px; }
+        .btn-logout { background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 10px; }
+        
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        .header { margin-bottom: 40px; text-align: center; }
+        .header h1 { font-size: 36px; margin-bottom: 12px; color: #7c3aed; }
+        .header p { color: #64748b; font-size: 16px; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+        .new-post-box { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 32px; border: 1px solid #e2e8f0; }
+        .new-post-box textarea { width: 100%; border: none; outline: none; resize: none; font-family: inherit; font-size: 16px; margin-bottom: 16px; background: transparent; }
+        .new-post-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+        .btn-primary { background: #7c3aed; color: white; padding: 10px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { background: #6d28d9; }
+
+        .feed { display: flex; flex-direction: column; gap: 20px; }
+        .post { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; }
+        .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .post-meta h4 { margin: 0; font-size: 15px; }
+        .post-meta p { margin: 2px 0 0; font-size: 12px; color: #94a3b8; }
+        .post-content { color: #334155; line-height: 1.6; font-size: 15px; margin-bottom: 20px; }
+        .post-actions { display: flex; gap: 16px; color: #64748b; font-size: 14px; font-weight: 500; }
+        .action-btn { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: color 0.2s; }
+        .action-btn:hover { color: #7c3aed; }
+    </style>
+</head>
+<body>
+    
+    <nav>
+        <a href="/index.html" class="logo">ManoSetu</a>
+        <div class="nav-links">
+            <a href="/index.html">Home</a>
+            <a href="/wellness.html">Wellness</a>
+            <a href="/community.html" class="active">Safe Board</a>
+            <a href="/events.html">Communities</a>
+            <a href="/booking.html">Book Session</a>
+            <a href="/dashboard.html" id="dashLink">Dashboard</a>
+        </div>
+        <button class="btn-sos" onclick="alert('Emergency signals sent. Help is on the way.')">SOS</button>
+        <button class="btn-logout" onclick="localStorage.clear(); window.location.href='/auth.html'">Logout</button>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>Safe Board</h1>
+            <p>A moderated, anonymous community space. Share your feelings, ask questions, and support others without judgment.</p>
+        </div>
+
+        <div class="new-post-box">
+            <textarea rows="3" placeholder="Share what's on your mind..."></textarea>
+            <div class="new-post-actions">
+                <div style="color: #94a3b8; font-size: 13px;">Posting as <strong style="color: #64748b;">Anonymous User</strong></div>
+                <button class="btn-primary" onclick="alert('Post submitted for moderation review.')">Post Securely</button>
+            </div>
+        </div>
+
+        <div class="feed">
+            <div class="post">
+                <div class="post-header">
+                    <div class="avatar">🦊</div>
+                    <div class="post-meta">
+                        <h4>Anonymous Fox</h4>
+                        <p>2 hours ago</p>
+                    </div>
+                </div>
+                <div class="post-content">
+                    I've been feeling incredibly overwhelmed with school logic lately. Does anyone else get so stressed they just can't start their assignments? How do you break the cycle?
+                </div>
+                <div class="post-actions">
+                    <div class="action-btn">🤍 12 Hugs</div>
+                    <div class="action-btn">💬 4 Replies</div>
+                </div>
+            </div>
+
+            <div class="post">
+                <div class="post-header">
+                    <div class="avatar">🦉</div>
+                    <div class="post-meta">
+                        <h4>Anonymous Owl</h4>
+                        <p>5 hours ago</p>
+                    </div>
+                </div>
+                <div class="post-content">
+                    Just finished my first session with a therapist from the platform. I was so nervous but it actually feels really good to finally talk about things out loud. Highly recommend taking the step if you're on the fence!
+                </div>
+                <div class="post-actions">
+                    <div class="action-btn">🤍 34 Hugs</div>
+                    <div class="action-btn">💬 2 Replies</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

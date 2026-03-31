@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManoSetu - NGO Communities & Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #8b5cf6; 
+            --accent-hover: #7c3aed;
+            --neon-green: #10b981;
+            --neon-pink: #ec4899;
+            --border: #e2e8f0;
+        }
+
+        body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding-top: 100px; }
+        
+        /* Navbar */
+        nav { position: fixed; top: 0; left: 0; right: 0; height: 75px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 1000; }
+        .logo { font-weight: 800; font-size: 24px; background: linear-gradient(135deg, var(--accent), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; margin-right: auto; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 30px; margin-right: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 14px; transition: 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); font-weight: 600; }
+        .btn-logout { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-left: 15px; font-family: inherit; }
+        .btn-logout:hover { background: #f1f5f9; color: var(--text-main); }
+        .btn-sos { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; font-family: inherit; }
+
+        /* Container & Grid */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 50px; }
+        .header h1 { font-size: 42px; font-weight: 800; margin-bottom: 10px; background: linear-gradient(135deg, var(--accent), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: var(--text-muted); font-size: 18px; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+        
+        /* Event Card */
+        .event-card { background: var(--card-bg); border-radius: 20px; padding: 30px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: transform 0.3s, box-shadow 0.3s; display: flex; flex-direction: column; }
+        .event-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(139, 92, 246, 0.08); border-color: #cbd5e1; }
+        
+        .ngo-badge { display: inline-block; background: rgba(16, 185, 129, 0.1); color: var(--neon-green); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; align-self: flex-start; }
+        .event-title { font-size: 22px; font-weight: 700; margin: 0 0 15px; color: var(--text-main); line-height: 1.3; }
+        .event-desc { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
+        
+        .event-meta { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; font-size: 13px; color: var(--text-main); font-weight: 500; }
+        .meta-item { display: flex; align-items: center; gap: 10px; }
+        .meta-icon { width: 30px; height: 30px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent); }
+
+        .btn-participate { background: var(--accent); color: white; padding: 14px 20px; border-radius: 12px; border: none; font-weight: 600; font-size: 15px; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; text-align: center; }
+        .btn-participate:hover { background: var(--accent-hover); box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3); }
+        .btn-participate.registered { background: #f1f5f9; color: var(--neon-green); pointer-events: none; border: 1px solid var(--border); box-shadow: none; }
+
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 2000; }
+        .modal.active { opacity: 1; pointer-events: all; }
+        .modal-card { background: white; padding: 40px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; transform: scale(0.9); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+        .modal.active .modal-card { transform: scale(1); }
+        .check-icon { width: 70px; height: 70px; background: rgba(16, 185, 129, 0.1); color: var(--neon-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 20px; }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .header h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/index.html" class="logo">ManoSetu</a>
+        <div class="nav-links">
+            <a href="/teens-portal.html">Dashboard</a>
+            <a href="/wellness.html">Wellness Space</a>
+            <a href="/community.html">Safe Board</a>
+            <a href="/events.html" class="active">Communities</a>
+        </div>
+        <button class="btn-sos" onclick="alert('Help is on the way. Please hold on.')">SOS</button>
+        <button class="btn-logout" onclick="window.location.href='/auth.html'">Login</button>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>NGO Communities & Events</h1>
+            <p>Connect with local and global non-profits hosting mental health workshops, support groups, and wellness retreats. You are not alone.</p>
+        </div>
+
+        <div class="events-grid" id="eventsContainer">
+            <!-- Event 1 -->
+            <div class="event-card">
+                <div class="ngo-badge">Minds Matter NGO</div>
+                <h2 class="event-title">Art Therapy Workshop: Painting Your Emotions</h2>
+                <p class="event-desc">Join professional art therapists and peers in a non-judgmental space to express complex feelings through guided canvas painting. No experience required.</p>
+                <div class="event-meta">
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-regular fa-calendar"></i></div> This Saturday, 4:00 PM</div>
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-solid fa-video"></i></div> Virtual via Zoom</div>
+                </div>
+                <button class="btn-participate" onclick="openModal(this)">Register to Participate</button>
+            </div>
+
+            <!-- Event 2 -->
+            <div class="event-card">
+                <div class="ngo-badge">Youth Horizon Foundation</div>
+                <h2 class="event-title">Overcoming Academic Burnout Seminar</h2>
+                <p class="event-desc">A 90-minute workshop led by clinical psychologists focusing on breaking the cycle of procrastination, managing exam anxiety, and rebuilding focus.</p>
+                <div class="event-meta">
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-regular fa-calendar"></i></div> Tomorrow, 6:30 PM</div>
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-solid fa-location-dot"></i></div> City Library, Main Hall</div>
+                </div>
+                <button class="btn-participate" onclick="openModal(this)">Register to Participate</button>
+            </div>
+
+            <!-- Event 3 -->
+            <div class="event-card">
+                <div class="ngo-badge">Global Hope Initiative</div>
+                <h2 class="event-title">Peer Support Circle: Navigating Social Anxiety</h2>
+                <p class="event-desc">A safe, moderated circle where teens can share experiences and learn practical grounding techniques to manage anxiety in social situations.</p>
+                <div class="event-meta">
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-regular fa-calendar"></i></div> Every Wednesday, 5:00 PM</div>
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-solid fa-video"></i></div> Discord Secured Voice Channel</div>
+                </div>
+                <button class="btn-participate" onclick="openModal(this)">Register to Participate</button>
+            </div>
+
+            <!-- Event 4 -->
+            <div class="event-card">
+                <div class="ngo-badge">Serenity Trust</div>
+                <h2 class="event-title">Weekend Nature Walk & Mindfulness Retreat</h2>
+                <p class="event-desc">Disconnect from screens and reconnect with nature. A guided 2-hour walking meditation focusing on breathwork and being present.</p>
+                <div class="event-meta">
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-regular fa-calendar"></i></div> Sunday, 8:00 AM</div>
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-solid fa-tree"></i></div> Botanical Gardens, Gate 1</div>
+                </div>
+                <button class="btn-participate" onclick="openModal(this)">Register to Participate</button>
+            </div>
+            
+            <!-- Event 5 -->
+            <div class="event-card">
+                <div class="ngo-badge">LightHouse Network</div>
+                <h2 class="event-title">Q&A: What is Therapy Actually Like?</h2>
+                <p class="event-desc">Nervous about seeing a therapist? Join real behavioral specialists as they answer anonymous questions and demystify the counseling process.</p>
+                <div class="event-meta">
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-regular fa-calendar"></i></div> Next Friday, 7:00 PM</div>
+                    <div class="meta-item"><div class="meta-icon"><i class="fa-solid fa-video"></i></div> Instagram Live / Web Portal</div>
+                </div>
+                <button class="btn-participate" onclick="openModal(this)">Register to Participate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal" onclick="closeModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            <h2 style="font-weight: 800; margin-bottom: 10px; color: #1e293b;">Registration Confirmed!</h2>
+            <p style="color: #64748b; margin-bottom: 25px; line-height: 1.6;">You have successfully registered for this event. We have sent the participation link and details to your registered email address.</p>
+            <button class="btn-participate" onclick="document.getElementById('successModal').classList.remove('active')" style="background: var(--text-main);">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let currentBtn = null;
+
+        function openModal(btnElement) {
+            currentBtn = btnElement;
+            document.getElementById('successModal').classList.add('active');
+            
+            // Transform button to registered state
+            currentBtn.innerHTML = '<i class="fa-solid fa-check"></i> Registered';
+            currentBtn.classList.add('registered');
+        }
+
+        function closeModal(e) {
+            if(e.target.id === 'successModal') {
+                document.getElementById('successModal').classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

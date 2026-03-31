@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    const token = localStorage.getItem('x-session-token');
+    if (!token && !window.location.pathname.includes('auth.html')) window.location.href = '/auth.html';
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManoSetu - Professional Adult Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #F4F7F6; /* Extremely soft sage gray */
+            --card-bg: #FFFFFF;
+            --text-main: #2D3748;
+            --text-muted: #718096;
+            --primary: #2C5282; /* Professional deep blue */
+            --secondary: #38B2AC; /* Calming Teal */
+            --border: #E2E8F0;
+        }
+
+        body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding-top: 80px; overflow-x: hidden; font-weight: 300; }
+        
+        /* Clean Clinical Navbar */
+        nav { position: fixed; top: 0; left: 0; right: 0; height: 75px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 40px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .logo { font-weight: 700; font-size: 22px; color: var(--primary); text-decoration: none; margin-right: auto; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 30px; margin-right: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 14px; transition: 0.2s; padding: 26px 0; border-bottom: 2px solid transparent; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .btn-sos { background: transparent; border: 1px solid #E53E3E; color: #E53E3E; padding: 8px 18px; border-radius: 6px; font-weight: 500; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; font-family: inherit; font-size: 13px; }
+        .btn-sos:hover { background: #FFF5F5; }
+        .btn-logout { background: transparent; color: var(--text-muted); border: none; font-weight: 500; cursor: pointer; transition: 0.2s; margin-left: 20px; font-family: inherit; font-size: 13px; }
+        .btn-logout:hover { color: var(--text-main); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* Header */
+        .header { margin-bottom: 40px; display: flex; justify-content: space-between; align-items: baseline; }
+        .header h1 { font-size: 32px; font-weight: 600; margin: 0 0 8px; color: var(--primary); }
+        .header p { color: var(--text-muted); font-size: 15px; margin: 0; }
+        
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+        .col-span-2 { grid-column: span 2; }
+        .col-span-1 { grid-column: span 1; }
+
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); border: 1px solid var(--border); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .card-title { font-size: 16px; font-weight: 600; color: var(--primary); margin: 0; }
+        
+        /* Clinical Info */
+        .clinical-stat { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #F7FAFC; }
+        .clinical-stat:last-child { border-bottom: none; }
+        .stat-label { font-size: 14px; color: var(--text-muted); }
+        .stat-value { font-size: 15px; font-weight: 500; color: var(--text-main); }
+        
+        /* Therapy Appointment */
+        .appointment-box { background: #F7FAFC; border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-align: center; }
+        .appointment-box h3 { font-size: 18px; font-weight: 600; color: var(--primary); margin: 0 0 5px; }
+        .appointment-box p { font-size: 14px; color: var(--text-muted); margin: 0 0 20px; }
+        
+        /* Buttons */
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 500; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #2A4365; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: #F7FAFC; }
+
+        /* AI Therapy Chat */
+        .chat-container { border: 1px solid var(--border); border-radius: 8px; height: 350px; display: flex; flex-direction: column; background: #FAFCFD; }
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .msg { max-width: 85%; padding: 14px 18px; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+        .msg.ai { background: white; border: 1px solid var(--border); color: var(--text-main); align-self: flex-start; }
+        .msg.user { background: var(--primary); color: white; align-self: flex-end; }
+        .chat-input-area { padding: 15px; background: white; border-top: 1px solid var(--border); display: flex; gap: 10px; border-radius: 0 0 8px 8px; }
+        .chat-input { flex: 1; border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-family: inherit; font-size: 14px; outline: none; background: #F7FAFC; }
+        .chat-input:focus { border-color: var(--secondary); background: white; }
+        
+        /* Mini Chart Mock */
+        .chart-mock { display: flex; align-items: flex-end; height: 100px; gap: 15px; margin-top: 20px; }
+        .chart-bar { flex: 1; background: var(--border); border-radius: 4px 4px 0 0; position: relative; }
+        .chart-bar .fill { position: absolute; bottom: 0; width: 100%; background: var(--secondary); border-radius: 4px 4px 0 0; }
+
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/index.html" class="logo">ManoSetu Pro</a>
+        <div class="nav-links">
+            <a href="/adults-portal.html" class="active">Dashboard</a>
+            <a href="/wellness.html">Clinical Journal</a>
+            <a href="/booking.html">Book Therapist</a>
+            <a href="/events.html">Communities</a>
+        </div>
+        <button class="btn-sos" onclick="alert('Standard operating protocol activated. Connecting to emergency triage.')"><i class="fa-solid fa-phone-medical"></i> Clinical Emergency</button>
+        <button class="btn-logout" onclick="localStorage.clear(); window.location.href='/auth.html'">Sign Out</button>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 id="greeting">Good evening.</h1>
+                <p>Your secure, HIPAA-compliant mental health command center.</p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Baseline Assessment</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--secondary);"><i class="fa-solid fa-check-circle"></i> Emotionally Regulated</div>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <!-- Left Col: CBT Chatbot -->
+            <div class="card col-span-2">
+                <div class="card-header">
+                    <h3 class="card-title">CBT Check-in Assistant</h3>
+                    <span style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-shield-halved"></i> Data encrypted at rest</span>
+                </div>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-history">
+                        <div class="msg ai">Hello. I'm your AI therapeutic assistant. Before your session with Dr. Jenkins next week, I want to help you track your cognitive patterns. What has been the most prominent stressor at work or home today?</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" class="chat-input" placeholder="Type your reflection..." onkeypress="if(event.key === 'Enter') sendMsg()">
+                        <button class="btn btn-primary" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Col: Appointments & Analytics -->
+            <div class="col-span-1" style="display: flex; flex-direction: column; gap: 24px;">
+                
+                <div class="card p-0" style="padding: 0; overflow: hidden;">
+                    <div class="card-header" style="border-bottom: none; margin-bottom: 0; padding: 20px 20px 0;">
+                        <h3 class="card-title">Next Appointment</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div class="appointment-box">
+                            <h3>Nov 12, 4:00 PM</h3>
+                            <p>Dr. Sarah Jenkins<br>Ph.D. Clinical Psychology</p>
+                            <a href="/booking.html" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Enter Virtual Waiting Room</a>
+                            <button class="btn btn-outline" style="width: 100%;">Reschedule</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header" style="border-bottom: none; padding-bottom: 0;">
+                        <h3 class="card-title">Stress Index (7 Days)</h3>
+                    </div>
+                    <div class="chart-mock">
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 40%;"></div></div>
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 60%;"></div></div>
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 30%;"></div></div>
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 80%; background: #E53E3E;"></div></div>
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 50%;"></div></div>
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 20%;"></div></div>
+                        <div class="chart-bar" style="height: 100px;"><div class="fill" style="height: 10%;"></div></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: var(--text-muted); font-weight: 500;">
+                        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const name = localStorage.getItem('manosetu-username');
+        if(name) {
+            document.getElementById('greeting').textContent = 'Good evening, ' + name + '.';
+        }
+
+        async function sendMsg() {
+            const inputField = document.getElementById('chat-input');
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            const chatHistory = document.getElementById('chat-history');
+            
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg user';
+            userDiv.innerText = message;
+            chatHistory.appendChild(userDiv);
+            inputField.value = '';
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            setTimeout(() => {
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'msg ai';
+                aiDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+                chatHistory.appendChild(aiDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                setTimeout(() => {
+                    const lc = message.toLowerCase();
+                    let reply = "Thank you for sharing that. It sounds like you're carrying a significant cognitive load. Let's document this in your private journal so Dr. Jenkins can review it.";
+                    if (lc.includes("work") || lc.includes("boss") || lc.includes("deadline")) {
+                        reply = "Workplace stress often triggers our 'all-or-nothing' cognitive distortions. Are you able to identify one boundary you can set tonight to help compartmentalize this stress?";
+                    } else if (lc.includes("anxious") || lc.includes("panic")) {
+                        reply = "I understand. Let's ground ourselves. Try to locate five things in the room you can see, four things you can touch, and three things you can hear. Take a deep, slow breath.";
+                    }
+                    aiDiv.innerHTML = reply;
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                }, 1500);
+            }, 500);
+        }
+    </script>
+</body>
+</html>

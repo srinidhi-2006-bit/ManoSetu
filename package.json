@@ -1,0 +1,25 @@
+{
+  "name": "manosetu",
+  "version": "1.0.0",
+  "description": "ManoSetu - Mental Health Platform for Young India",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "mental-health",
+    "india",
+    "youth",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3"
+  }
+}

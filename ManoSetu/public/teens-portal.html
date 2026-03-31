@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    const token = localStorage.getItem('x-session-token');
+    if (!token && !window.location.pathname.includes('auth.html')) window.location.href = '/auth.html';
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManoSetu - Youth Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #f8f9fc; /* Soft White Light Mode */
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #8b5cf6; /* Vibrant Purple */
+            --accent-hover: #7c3aed;
+            --neon-green: #10b981;
+            --neon-pink: #ec4899;
+            --border: #e2e8f0;
+        }
+
+        body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; padding-top: 80px; overflow-x: hidden; }
+        
+        /* Modern Glassmorphism Navbar */
+        nav { position: fixed; top: 0; left: 0; right: 0; height: 75px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 40px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .logo { font-weight: 800; font-size: 24px; background: linear-gradient(135deg, var(--accent), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; margin-right: auto; letter-spacing: -0.5px; }
+        .nav-links { display: flex; gap: 30px; margin-right: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 14px; transition: 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); text-shadow: none; font-weight: 600; }
+        .btn-sos { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; font-family: inherit; }
+        .btn-sos:hover { background: #ef4444; color: white; box-shadow: 0 0 15px rgba(239,68,68,0.3); }
+        .btn-logout { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 8px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-left: 15px; font-family: inherit; }
+        .btn-logout:hover { background: #f1f5f9; color: var(--text-main); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        /* Hero Section */
+        .hero { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+        .hero-text h1 { font-size: 38px; margin: 0 0 10px; font-weight: 800; }
+        .hero-text p { color: var(--text-muted); font-size: 16px; margin: 0; max-width: 500px; line-height: 1.6; }
+        
+        .grid-layout { display: grid; grid-template-columns: 2fr 1.2fr; gap: 30px; }
+        .col { display: flex; flex-direction: column; gap: 30px; }
+
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; border: 1px solid var(--border); position: relative; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin: 0; }
+        
+        /* Mood Tracker Mini */
+        .mood-grid { display: flex; gap: 15px; }
+        .mood-btn { flex: 1; background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 15px 0; font-size: 32px; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .mood-btn span.label { font-size: 12px; color: var(--text-muted); font-family: 'Sora'; font-weight: 600; }
+        .mood-btn:hover { background: #f1f5f9; transform: translateY(-3px); }
+        .mood-btn.active { border-color: var(--accent); background: rgba(139, 92, 246, 0.1); box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+
+        /* AI Chatbot Area */
+        .ai-chat-box { background: #F8FAFC; border-radius: 16px; height: 350px; display: flex; flex-direction: column; border: 1px solid var(--border); }
+        .ai-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 15px; background: white; border-radius: 16px 16px 0 0;}
+        .ai-header .dot { width: 8px; height: 8px; background: var(--neon-green); border-radius: 50%; box-shadow: 0 0 10px rgba(16,185,129,0.4); }
+        .ai-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+        .msg.ai { background: white; border: 1px solid var(--border); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .msg.user { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .ai-input-area { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: white; border-radius: 0 0 16px 16px;}
+        .ai-input { flex: 1; background: #f1f5f9; border: 1px solid var(--border); padding: 12px 16px; border-radius: 10px; color: var(--text-main); font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .ai-input:focus { border-color: var(--accent); background: white; }
+        .btn-send { background: var(--accent); color: white; border: none; width: 44px; height: 44px; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .btn-send:hover { background: var(--accent-hover); }
+
+        /* Tools & Actions */
+        .tool-btn { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--border); padding: 18px 20px; border-radius: 12px; cursor: pointer; transition: 0.2s; text-decoration: none; color: var(--text-main); margin-bottom: 15px; }
+        .tool-btn:hover { background: white; border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .tool-left { display: flex; align-items: center; gap: 15px; }
+        .tool-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .bg-purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+        .bg-pink { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+        .bg-blue { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; }
+        .tool-info h4 { margin: 0 0 4px; font-size: 15px; }
+        .tool-info p { margin: 0; font-size: 12px; color: var(--text-muted); }
+
+        /* Audio Visualizer Mock */
+        .visualizer { display: flex; gap: 4px; height: 20px; align-items: flex-end; }
+        .bar { width: 4px; background: var(--neon-pink); border-radius: 4px; animation: bounce 1s infinite alternate; }
+        .bar:nth-child(2) { animation-delay: 0.2s; height: 60%; }
+        .bar:nth-child(3) { animation-delay: 0.4s; height: 100%; }
+        .bar:nth-child(4) { animation-delay: 0.1s; height: 40%; }
+        @keyframes bounce { 0% { height: 20%; } 100% { height: 100%; } }
+
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/index.html" class="logo">ManoSetu Youth</a>
+        <div class="nav-links">
+            <a href="/teens-portal.html" class="active">Dashboard</a>
+            <a href="/wellness.html">Wellness Space</a>
+            <a href="/community.html">Safe Board</a>
+            <a href="/events.html">Communities</a>
+        </div>
+        <button class="btn-sos" onclick="alert('Emergency signals routed anonymously.')"><i class="fa-solid fa-triangle-exclamation"></i> SOS Trigger</button>
+        <button class="btn-logout" onclick="localStorage.clear(); window.location.href='/auth.html'">Logout</button>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <div class="hero-text">
+                <h1 id="greeting">Hey there.</h1>
+                <p>Welcome to your completely private space. Vent to your AI mentor, track your academic burnout, or connect with peers.</p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Current Vibe</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--neon-green);">Stable 🌱</div>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <!-- Left Col: Chat & Mood -->
+            <div class="col">
+                <div class="card p-0" style="padding: 0;">
+                    <div class="ai-chat-box">
+                        <div class="ai-header">
+                            <div class="dot"></div>
+                            ManoSetu Mentor AI
+                            <span style="margin-left: auto; font-size: 12px; color: var(--text-muted); font-weight: 400;"><i class="fa-solid fa-lock"></i> End-to-End Encrypted</span>
+                        </div>
+                        <div class="ai-messages" id="chat-history">
+                            <div class="msg ai">Hey! I'm your private AI mentor. School, drama, stress, or just feeling overwhelmed—I'm here to listen. What's on your mind today?</div>
+                        </div>
+                        <div class="ai-input-area">
+                            <input type="text" id="chat-input" class="ai-input" placeholder="Type what's bothering you anonymously..." onkeypress="if(event.key === 'Enter') sendMsg()">
+                            <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fa-solid fa-bolt" style="color: #fbbf24;"></i> Quick Vibe Check</h3>
+                    </div>
+                    <div class="mood-grid">
+                        <button class="mood-btn" onclick="selectMood(this)">🔥<span class="label">Crushing it</span></button>
+                        <button class="mood-btn" onclick="selectMood(this)">😌<span class="label">Chilling</span></button>
+                        <button class="mood-btn" onclick="selectMood(this)">🫠<span class="label">Melting</span></button>
+                        <button class="mood-btn" onclick="selectMood(this)">💀<span class="label">Dead inside</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Col: Toolkit -->
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Academic Survival Kit</h3>
+                    </div>
+                    
+                    <div class="tool-btn" onclick="startPomodoro()">
+                        <div class="tool-left">
+                            <div class="tool-icon bg-purple"><i class="fa-solid fa-stopwatch"></i></div>
+                            <div class="tool-info">
+                                <h4>Study Focus Timer</h4>
+                                <p>25m Pomodoro to beat procrastination.</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-muted);"></i>
+                    </div>
+
+                    <div class="tool-btn">
+                        <div class="tool-left">
+                            <div class="tool-icon bg-blue"><i class="fa-solid fa-wind"></i></div>
+                            <div class="tool-info">
+                                <h4>4-7-8 Breathing</h4>
+                                <p>Quick 60-second anxiety reset.</p>
+                            </div>
+                        </div>
+                        <div class="visualizer">
+                            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                        </div>
+                    </div>
+
+                    <a href="/community.html" class="tool-btn">
+                        <div class="tool-left">
+                            <div class="tool-icon bg-pink"><i class="fa-solid fa-masks-theater"></i></div>
+                            <div class="tool-info">
+                                <h4>Anonymous Safe Board</h4>
+                                <p>See what peers are struggling with.</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--text-muted);"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const name = localStorage.getItem('manosetu-username');
+        if(name) {
+            document.getElementById('greeting').textContent = 'Hey, ' + name + '.';
+        }
+
+        function selectMood(btn) {
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function startPomodoro() {
+            alert("Starting a 25-minute distraction-free focus block...");
+        }
+
+        // --- Mock AI Chat Logic ---
+        async function sendMsg() {
+            const inputField = document.getElementById('chat-input');
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            const chatHistory = document.getElementById('chat-history');
+            
+            // Append User Message
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg user';
+            userDiv.innerText = message;
+            chatHistory.appendChild(userDiv);
+            inputField.value = '';
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            // Wait effect
+            setTimeout(() => {
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'msg ai';
+                aiDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Typing...';
+                chatHistory.appendChild(aiDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                // Fake response based on keywords (since proper Gemini API requires backend)
+                setTimeout(() => {
+                    const lc = message.toLowerCase();
+                    let reply = "I hear you. Dealing with that can be super draining. Do you want to try a quick breathing exercise or just vent more?";
+                    if (lc.includes("school") || lc.includes("exam") || lc.includes("test")) {
+                        reply = "Academic pressure is one of the hardest things to handle right now. Remember that a grade doesn't define your worth. Try breaking your studying down into 20-minute chunks to lower the anxiety.";
+                    } else if (lc.includes("friend") || lc.includes("lonely")) {
+                        reply = "Friendship drama or feeling lonely is genuinely painful. It's totally okay to feel hurt. Have you checked out the Safe Board? Realizing others are going through the exact same thing can help feeling less isolated.";
+                    } else if (lc.includes("die") || lc.includes("kill") || lc.includes("suicide")) {
+                        reply = "<b>It sounds like you are in overwhelming pain right now. Please know you are not alone. Please click the SOS button in the top right, or text HOME to 741741 immediately. People care and want to help you stay safe.</b>";
+                        aiDiv.style.border = "1px solid red";
+                    }
+                    aiDiv.innerHTML = reply;
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                }, 1500);
+            }, 500);
+        }
+    </script>
+</body>
+</html>

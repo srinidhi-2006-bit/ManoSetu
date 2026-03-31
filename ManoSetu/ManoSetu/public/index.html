@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ManoSetu — Youth Mental Health Platform</title>
+<script>
+    // Auth Protection
+    const token = localStorage.getItem('x-session-token');
+    if (!token && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
+        window.location.href = '/auth.html';
+    }
+
+    // Intercept all fetches to inject token
+    const originalFetch = window.fetch;
+    window.fetch = async function() {
+        let [resource, config] = arguments;
+        if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/auth')) {
+            config = config || {};
+            config.headers = config.headers || {};
+            config.headers['x-session-token'] = localStorage.getItem('x-session-token') || '';
+        }
+        return originalFetch(resource, config);
+    };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Noto+Sans+Devanagari:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+ :root {
+ --purple: #7c3aed;
+ --purple-light: #6d28d9;
+ --pink: #ec4899;
+ --pink-light: #db2777;
+ --teal: #0d9488;
+ --teal-light: #0f766e;
+ --blue: #3b82f6;
+ --blue-soft: #2563eb;
+ --red: #ef4444;
+ --bg: #f8f9fc;
+ --bg2: #ffffff;
+ --glass: rgba(255,255,255,0.7);
+ --glass-border: rgba(0,0,0,0.08);
+ --glass-hover: rgba(255,255,255,0.9);
+ --text: #1a1a2e;
+ --text-muted: rgba(26,26,46,0.6);
+ --text-dim: rgba(26,26,46,0.35);
+ --radius: 20px;
+ --radius-sm: 12px;
+ --glow-purple: 0 8px 32px rgba(124,58,237,0.15);
+ --glow-pink: 0 8px 32px rgba(236,72,153,0.15);
+ --glow-teal: 0 8px 32px rgba(13,148,136,0.15);
+ }
+ *{margin:0;padding:0;box-sizing:border-box;}
+ html{scroll-behavior:smooth;}
+ body{
+ font-family:'Sora',sans-serif;
+ background:var(--bg);
+ color:var(--text);
+ overflow-x:hidden;
+ }
+
+ /* AURORA BACKGROUND */
+ .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+ .aurora-blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.08;animation:drift 20s ease-in-out infinite;}
+ .aurora-blob.a1{width:800px;height:800px;background:radial-gradient(circle,#c4b5fd,transparent);top:-200px;left:-200px;animation-delay:0s;}
+ .aurora-blob.a2{width:600px;height:600px;background:radial-gradient(circle,#fbcfe8,transparent);top:30%;right:-100px;animation-delay:-7s;}
+ .aurora-blob.a3{width:700px;height:700px;background:radial-gradient(circle,#99f6e4,transparent);bottom:-100px;left:30%;animation-delay:-13s;}
+ .aurora-blob.a4{width:500px;height:500px;background:radial-gradient(circle,#bfdbfe,transparent);top:60%;left:10%;animation-delay:-5s;opacity:0.06;}
+ @keyframes drift{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(60px,-40px) scale(1.1);}66%{transform:translate(-40px,60px) scale(0.95);}
+ }
+
+ /* CANVAS PARTICLES */
+ #particles{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.3;}
+
+ /* SCROLL INDICATOR */
+ .scroll-progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--pink),var(--teal));z-index:9999;transition:width 0.1s;}
+
+ /* NAVBAR */
+ nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:16px 48px;display:flex;align-items:center;gap:32px;
+ background:rgba(255,255,255,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+ border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s;}
+ nav.scrolled{padding:12px 48px;background:rgba(255,255,255,0.92);}
+ .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;}
+ .nav-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(124,58,237,0.5);}
+ .nav-logo-text{font-size:20px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#ec4899);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.3px;}
+ .nav-logo-sub{font-size:10px;color:var(--text-muted);font-weight:400;display:block;letter-spacing:1px;text-transform:uppercase;-webkit-text-fill-color:var(--text-muted);}
+ .nav-links{display:flex;gap:4px;list-style:none;}
+ .nav-links a{color:var(--text-muted);text-decoration:none;font-size:13.5px;font-weight:500;padding:7px 14px;border-radius:8px;transition:all 0.2s;letter-spacing:0.2px;}
+ .nav-links a:hover{color:var(--text);background:var(--glass);}
+ .nav-actions{display:flex;align-items:center;gap:10px;}
+ .lang-toggle{background:var(--glass);border:1px solid var(--glass-border);color:var(--text-muted);padding:6px 14px;border-radius:8px;font-size:12px;font-family:'Sora',sans-serif;cursor:pointer;transition:all 0.2s;}
+ .lang-toggle:hover{color:var(--text);background:var(--glass-hover);}
+ .btn-ai-chat{background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(236,72,153,0.1));border:1px solid rgba(124,58,237,0.25);color:var(--purple);padding:8px 18px;border-radius:10px;font-size:13px;font-family:'Sora',sans-serif;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:7px;font-weight:500;}
+ .btn-ai-chat:hover{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(236,72,153,0.2));box-shadow:0 4px 16px rgba(124,58,237,0.2);}
+ .btn-sos{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:8px 18px;border-radius:10px;font-size:13px;font-family:'Sora',sans-serif;cursor:pointer;font-weight:600;border:none;transition:all 0.25s;display:flex;align-items:center;gap:6px;animation:sos-pulse 3s ease-in-out infinite;}
+ @keyframes sos-pulse{0%,100%{box-shadow:0 0 15px rgba(239,68,68,0.4);}50%{box-shadow:0 0 30px rgba(239,68,68,0.7);}}
+
+ /* SECTIONS */
+ section{position:relative;z-index:10;}
+
+ /* HERO */
+ .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 48px 80px;text-align:center;position:relative;}
+ .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);padding:8px 18px;border-radius:100px;font-size:12px;color:var(--purple);margin-bottom:32px;letter-spacing:0.5px;animation:fadeUp 0.8s ease both;}
+ .hero-badge .dot{width:6px;height:6px;background:var(--purple-light);border-radius:50%;animation:blink 2s infinite;}
+ @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+ .hero-title{font-family:'DM Serif Display',serif;font-size:clamp(48px,7vw,96px);line-height:1.05;letter-spacing:-2px;margin-bottom:24px;animation:fadeUp 0.8s ease 0.1s both;}
+ .hero-title .line1{display:block;background:linear-gradient(135deg,#7c3aed,#ec4899 50%,#0d9488);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+ .hero-title .line2{display:block;color:var(--text);font-style:italic;}
+ .hero-title .line3{display:block;background:linear-gradient(135deg,#0d9488,#3b82f6);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+ .hero-subtitle{font-size:17px;color:var(--text-muted);max-width:560px;line-height:1.7;margin:0 auto 40px;animation:fadeUp 0.8s ease 0.2s both;font-weight:300;}
+ .hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.8s ease 0.3s both;margin-bottom:64px;}
+ .btn-primary{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;padding:14px 32px;border-radius:14px;font-size:15px;font-family:'Sora',sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.3s;letter-spacing:0.2px;}
+ .btn-primary:hover{transform:translateY(-2px);box-shadow:0 20px 50px rgba(124,58,237,0.4);}
+ .btn-ghost{background:var(--glass);border:1px solid var(--glass-border);color:var(--text);padding:14px 32px;border-radius:14px;font-size:15px;font-family:'Sora',sans-serif;font-weight:500;cursor:pointer;transition:all 0.3s;backdrop-filter:blur(10px);}
+ .btn-ghost:hover{background:var(--glass-hover);border-color:rgba(255,255,255,0.2);}
+
+ /* HERO PREVIEW CARDS */
+ .hero-preview{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:900px;width:100%;margin:0 auto;animation:fadeUp 0.8s ease 0.4s both;}
+ .preview-card{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius);padding:20px;text-align:left;backdrop-filter:blur(16px);transition:all 0.3s;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);}
+ .preview-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(124,58,237,0.02));pointer-events:none;}
+ .preview-card:hover{border-color:rgba(124,58,237,0.2);transform:translateY(-4px);box-shadow:0 20px 40px rgba(124,58,237,0.1);}
+ .preview-card .card-icon{font-size:24px;margin-bottom:12px;}
+ .preview-card h3{font-size:14px;font-weight:600;margin-bottom:6px;}
+ .preview-card p{font-size:12px;color:var(--text-muted);line-height:1.5;}
+ .preview-card .card-glow{position:absolute;width:80px;height:80px;border-radius:50%;filter:blur(30px);top:-20px;right:-20px;opacity:0.3;}
+ .pc1 .card-glow{background:var(--purple);}
+ .pc2 .card-glow{background:var(--pink);}
+ .pc3 .card-glow{background:var(--teal);}
+
+ /* CHAT PREVIEW inside card */
+ .mini-chat{display:flex;flex-direction:column;gap:8px;}
+ .mini-msg{padding:8px 12px;border-radius:10px;font-size:11px;line-height:1.4;}
+ .mini-msg.ai{background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);color:#5b21b6;align-self:flex-start;max-width:85%;}
+ .mini-msg.user{background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.15);color:#9d174d;align-self:flex-end;max-width:85%;}
+ .typing-dots{display:flex;gap:4px;padding:8px 12px;}
+ .typing-dots span{width:5px;height:5px;background:var(--purple);border-radius:50%;animation:typing 1.2s infinite;}
+ .typing-dots span:nth-child(2){animation-delay:0.2s;}
+ .typing-dots span:nth-child(3){animation-delay:0.4s;}
+ @keyframes typing{0%,60%,100%{transform:translateY(0);opacity:0.4;}30%{transform:translateY(-4px);opacity:1;}}
+
+ /* MOOD MINI */
+ .mood-mini{display:flex;gap:8px;flex-wrap:wrap;}
+ .mood-emoji{width:36px;height:36px;border-radius:10px;background:var(--glass);border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all 0.2s;}
+ .mood-emoji:hover,.mood-emoji.active{background:rgba(124,58,237,0.2);border-color:var(--purple-light);transform:scale(1.1);}
+ .mood-bar{height:4px;border-radius:2px;background:rgba(255,255,255,0.1);margin-top:10px;overflow:hidden;}
+ .mood-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--pink));width:72%;animation:fillBar 2s ease 1s both;}
+ @keyframes fillBar{from{width:0;}to{width:72%;}}
+
+ /* TRUST STRIP */
+ .trust-strip{padding:24px 48px;border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);background:rgba(124,58,237,0.02);display:flex;justify-content:center;gap:64px;flex-wrap:wrap;}
+ .trust-item{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;}
+ .trust-item .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+ .trust-item .icon.green{background:rgba(16,185,129,0.15);}
+ .trust-item .icon.blue{background:rgba(59,130,246,0.15);}
+ .trust-item .icon.purple{background:rgba(124,58,237,0.15);}
+ .trust-item strong{color:var(--text);font-weight:600;}
+
+ /* SECTION HEADER */
+ .section-header{text-align:center;margin-bottom:56px;}
+ .section-tag{display:inline-block;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);color:var(--purple);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:6px 16px;border-radius:100px;margin-bottom:16px;}
+ .section-title{font-family:'DM Serif Display',serif;font-size:clamp(36px,4vw,56px);line-height:1.1;letter-spacing:-1px;margin-bottom:16px;}
+ .section-title .grad{background:linear-gradient(135deg,var(--purple),var(--pink));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+ .section-desc{font-size:16px;color:var(--text-muted);max-width:520px;margin:0 auto;line-height:1.7;font-weight:300;}
+
+ /* FEATURES */
+ .features{padding:100px 48px;}
+ .features-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1200px;margin:0 auto;}
+ .feature-card{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius);padding:28px;transition:all 0.35s;position:relative;overflow:hidden;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
+ .feature-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 50%,rgba(124,58,237,0.03));pointer-events:none;opacity:0;transition:opacity 0.3s;}
+ .feature-card:hover{border-color:rgba(124,58,237,0.2);transform:translateY(-6px);box-shadow:0 24px 60px rgba(124,58,237,0.12);}
+ .feature-card:hover::after{opacity:1;}
+ .fc-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px;}
+ .fc-icon.p{background:rgba(124,58,237,0.2);}
+ .fc-icon.pi{background:rgba(236,72,153,0.2);}
+ .fc-icon.t{background:rgba(13,148,136,0.2);}
+ .fc-icon.b{background:rgba(59,130,246,0.2);}
+ .feature-card h3{font-size:15px;font-weight:600;margin-bottom:8px;}
+ .feature-card p{font-size:13px;color:var(--text-muted);line-height:1.6;}
+ .feature-card .fc-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;margin-top:14px;}
+ .fc-tag.new{background:rgba(124,58,237,0.1);color:var(--purple);}
+ .fc-tag.ai{background:rgba(236,72,153,0.1);color:var(--pink);}
+ .fc-tag.live{background:rgba(13,148,136,0.1);color:var(--teal);}
+
+ /* AGE ADAPTIVE */
+ .age-section{padding:100px 48px;background:rgba(124,58,237,0.02);}
+ .age-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:48px;flex-wrap:wrap;}
+ .age-tab{padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.25s;border:1px solid var(--glass-border);background:var(--glass);color:var(--text-muted);font-family:'Sora',sans-serif;}
+ .age-tab:hover{color:var(--text);}
+ .age-tab.active{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border-color:transparent;box-shadow:0 8px 24px rgba(124,58,237,0.4);}
+ .age-content{max-width:1000px;margin:0 auto;display:none;}
+ .age-content.active{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;}
+ .age-info h2{font-family:'DM Serif Display',serif;font-size:36px;line-height:1.2;margin-bottom:16px;}
+ .age-info p{font-size:15px;color:var(--text-muted);line-height:1.8;margin-bottom:24px;}
+ .age-features{display:flex;flex-direction:column;gap:10px;}
+ .age-feature{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text-muted);}
+ .age-feature .check{width:22px;height:22px;border-radius:6px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+ .age-visual{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius);padding:32px;backdrop-filter:blur(16px);box-shadow:0 4px 20px rgba(0,0,0,0.06);}
+
+ /* YOUTH FOCUS */
+ .youth-section{padding:100px 48px;}
+ .youth-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1100px;margin:0 auto;}
+ .youth-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px 24px;text-align:center;transition:all 0.3s;cursor:pointer;position:relative;overflow:hidden;}
+ .youth-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--purple),var(--pink));transform:scaleX(0);transition:transform 0.3s;transform-origin:left;}
+ .youth-card:hover::before{transform:scaleX(1);}
+ .youth-card:hover{border-color:rgba(124,58,237,0.15);transform:translateY(-4px);box-shadow:0 16px 40px rgba(124,58,237,0.1);}
+ .yc-icon{font-size:36px;margin-bottom:16px;display:block;}
+ .youth-card h3{font-size:16px;font-weight:600;margin-bottom:8px;}
+ .youth-card p{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;}
+ .btn-talk{background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(236,72,153,0.1));border:1px solid rgba(124,58,237,0.2);color:var(--purple);padding:9px 18px;border-radius:8px;font-size:12px;font-family:'Sora',sans-serif;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+ .btn-talk:hover{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(236,72,153,0.2));box-shadow:0 8px 20px rgba(124,58,237,0.15);}
+
+ /* NGO DASHBOARD */
+ .ngo-section{padding:100px 48px;background:rgba(13,148,136,0.03);}
+ .ngo-dashboard{max-width:1100px;margin:0 auto;background:rgba(255,255,255,0.85);border:1px solid rgba(0,0,0,0.06);border-radius:24px;overflow:hidden;backdrop-filter:blur(20px);box-shadow:0 4px 24px rgba(0,0,0,0.06);}
+ .ngo-header{padding:20px 28px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:12px;}
+ .ngo-header-title{font-size:15px;font-weight:600;}
+ .ngo-header-sub{font-size:12px;color:var(--text-muted);}
+ .status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;flex-shrink:0;animation:blink 2s infinite;}
+ .ngo-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;}
+ .ngo-panel{padding:28px;border-right:1px solid var(--glass-border);}
+ .ngo-panel:last-child{border-right:none;}
+ .ngo-stat{text-align:center;padding:20px;background:rgba(124,58,237,0.04);border-radius:14px;margin-bottom:12px;}
+ .ngo-stat .val{font-size:36px;font-weight:700;background:linear-gradient(135deg,var(--purple),var(--pink));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+ .ngo-stat .label{font-size:12px;color:var(--text-muted);margin-top:4px;}
+ .ngo-stat .delta{font-size:11px;margin-top:6px;}
+ .delta.up{color:#10b981;}
+ .delta.down{color:#ef4444;}
+ /* heatmap */
+ .heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;}
+ .heatmap-cell{aspect-ratio:1;border-radius:4px;background:rgba(0,0,0,0.04);}
+ .heatmap-cell.l1{background:rgba(124,58,237,0.2);}
+ .heatmap-cell.l2{background:rgba(124,58,237,0.4);}
+ .heatmap-cell.l3{background:rgba(124,58,237,0.65);}
+ .heatmap-cell.l4{background:rgba(236,72,153,0.5);}
+ .heatmap-cell.alert{background:rgba(239,68,68,0.6);animation:alertPulse 2s infinite;}
+ @keyframes alertPulse{0%,100%{opacity:0.6;}50%{opacity:1;}}
+ .alert-item{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:10px;margin-top:10px;font-size:12px;}
+ .alert-item .alert-icon{font-size:14px;flex-shrink:0;}
+ .alert-item .alert-text{color:var(--text-muted);flex:1;line-height:1.4;}
+ .alert-item .alert-badge{background:rgba(239,68,68,0.2);color:#fca5a5;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;white-space:nowrap;}
+
+ /* BAR CHART */
+ .bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:8px;}
+ .bar{flex:1;border-radius:4px 4px 0 0;background:rgba(124,58,237,0.3);transition:all 0.3s;cursor:pointer;}
+ .bar:hover{background:rgba(167,139,250,0.5);}
+
+ /* PEER SUPPORT / COMMUNITY */
+ .community-section{padding:100px 48px;}
+ .community-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1000px;margin:0 auto;}
+ .community-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:28px;backdrop-filter:blur(16px);}
+ .room-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+ .room-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.03);cursor:pointer;transition:all 0.2s;}
+ .room-item:hover{background:rgba(255,255,255,0.06);}
+ .room-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+ .room-info{flex:1;}
+ .room-info h4{font-size:13px;font-weight:600;margin-bottom:2px;}
+ .room-info p{font-size:11px;color:var(--text-muted);}
+ .room-count{font-size:11px;background:rgba(124,58,237,0.1);color:var(--purple);padding:3px 10px;border-radius:100px;}
+ .anon-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(13,148,136,0.08);border:1px solid rgba(13,148,136,0.2);color:var(--teal);padding:5px 12px;border-radius:100px;font-size:11px;font-weight:500;margin-top:12px;}
+
+ /* THERAPY SECTION */
+ .therapy-section{padding:100px 48px;background:rgba(236,72,153,0.015);}
+ .therapist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto;}
+ .therapist-card{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius);padding:28px;text-align:center;transition:all 0.3s;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
+ .therapist-card:hover{border-color:rgba(124,58,237,0.2);transform:translateY(-4px);box-shadow:0 16px 40px rgba(124,58,237,0.1);}
+ .therapist-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(124,58,237,0.2);}
+ .therapist-card h3{font-size:15px;font-weight:600;margin-bottom:4px;}
+ .therapist-card .spec{font-size:12px;color:var(--text-muted);margin-bottom:12px;}
+ .therapist-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px;}
+ .t-tag{font-size:10px;background:rgba(124,58,237,0.08);color:var(--purple);padding:3px 10px;border-radius:100px;}
+ .rating{display:flex;align-items:center;gap:4px;justify-content:center;font-size:12px;margin-bottom:16px;}
+ .stars{color:#fbbf24;letter-spacing:-1px;}
+ .btn-book{width:100%;background:linear-gradient(135deg,var(--purple),var(--pink));color:white;padding:10px;border-radius:10px;font-size:13px;font-family:'Sora',sans-serif;font-weight:600;border:none;cursor:pointer;transition:all 0.2s;}
+ .btn-book:hover{opacity:0.9;transform:translateY(-1px);}
+
+ /* WELLNESS */
+ .wellness-section{padding:100px 48px;}
+ .wellness-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto;}
+ .wellness-card{background:rgba(255,255,255,0.8);border:1px solid rgba(0,0,0,0.06);border-radius:var(--radius);padding:32px 24px;text-align:center;transition:all 0.3s;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
+ .wellness-card:hover{transform:translateY(-4px);border-color:rgba(13,148,136,0.2);box-shadow:var(--glow-teal);}
+ .w-icon{font-size:44px;margin-bottom:16px;display:block;}
+ .wellness-card h3{font-size:16px;font-weight:600;margin-bottom:8px;}
+ .wellness-card p{font-size:13px;color:var(--text-muted);line-height:1.6;}
+ .breath-ring{width:80px;height:80px;border-radius:50%;border:2px solid rgba(13,148,136,0.25);margin:16px auto 0;display:flex;align-items:center;justify-content:center;font-size:22px;animation:breathe 4s ease-in-out infinite;}
+ @keyframes breathe{0%,100%{transform:scale(1);border-color:rgba(13,148,136,0.15);}50%{transform:scale(1.2);border-color:rgba(13,148,136,0.5);}}
+
+ /* GAMIFICATION */
+ .gamify-section{padding:80px 48px;background:rgba(251,191,36,0.02);}
+ .gamify-row{display:flex;gap:20px;max-width:1000px;margin:0 auto;flex-wrap:wrap;}
+ .gamify-card{flex:1;min-width:200px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:24px;}
+ .streak-count{font-size:48px;font-weight:700;background:linear-gradient(135deg,#fbbf24,#f97316);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+ .streak-label{font-size:12px;color:var(--text-muted);margin-top:4px;}
+ .streak-days{display:flex;gap:6px;margin-top:12px;}
+ .streak-day{width:28px;height:28px;border-radius:8px;border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;}
+ .streak-day.done{background:linear-gradient(135deg,var(--purple),var(--pink));border-color:transparent;color:white;}
+ .streak-day.today{border-color:var(--purple-light);color:var(--purple-light);}
+ .xp-bar-wrap{margin-top:16px;}
+ .xp-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:6px;}
+ .xp-bar{height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;}
+ .xp-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--purple),var(--pink));width:65%;transition:width 1s ease 0.5s;}
+ .badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+ .badge{text-align:center;padding:10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid var(--glass-border);}
+ .badge .b-icon{font-size:20px;}
+ .badge .b-name{font-size:9px;color:var(--text-muted);margin-top:4px;}
+ .badge.earned{border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.05);}
+
+ /* EMERGENCY */
+ .emergency-section{padding:80px 48px;}
+ .sos-banner{max-width:900px;margin:0 auto;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:24px;padding:48px;text-align:center;position:relative;overflow:hidden;}
+ .sos-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(239,68,68,0.1),transparent 70%);pointer-events:none;}
+ .sos-icon{font-size:48px;margin-bottom:16px;}
+ .sos-banner h2{font-family:'DM Serif Display',serif;font-size:36px;margin-bottom:12px;}
+ .sos-banner p{font-size:15px;color:var(--text-muted);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto;}
+ .sos-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+ .btn-sos-big{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:16px 40px;border-radius:14px;font-size:16px;font-family:'Sora',sans-serif;font-weight:700;border:none;cursor:pointer;transition:all 0.3s;box-shadow:0 0 30px rgba(239,68,68,0.4);}
+ .btn-sos-big:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(239,68,68,0.6);}
+ .btn-helpline{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:16px 32px;border-radius:14px;font-size:14px;font-family:'Sora',sans-serif;font-weight:600;cursor:pointer;transition:all 0.2s;}
+
+ /* CTA */
+ .cta-section{padding:120px 48px;text-align:center;}
+ .cta-inner{max-width:700px;margin:0 auto;}
+ .cta-section h2{font-family:'DM Serif Display',serif;font-size:clamp(36px,5vw,64px);line-height:1.1;letter-spacing:-1.5px;margin-bottom:20px;}
+ .cta-section h2 .grad{background:linear-gradient(135deg,var(--purple),var(--pink),var(--teal));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+ .cta-section p{font-size:17px;color:var(--text-muted);line-height:1.7;margin-bottom:40px;font-weight:300;}
+
+ /* FOOTER */
+ footer{padding:60px 48px 40px;border-top:1px solid var(--glass-border);}
+ .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;max-width:1200px;margin:0 auto 48px;}
+ .footer-brand .logo{font-size:22px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#ec4899);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px;}
+ .footer-brand p{font-size:13px;color:var(--text-muted);line-height:1.7;max-width:280px;}
+ .footer-col h4{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;}
+ .footer-col a{display:block;font-size:13px;color:var(--text-muted);text-decoration:none;margin-bottom:10px;transition:color 0.2s;}
+ .footer-col a:hover{color:var(--text);}
+ .footer-bottom{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;padding-top:24px;border-top:1px solid var(--glass-border);font-size:12px;color:var(--text-dim);}
+ .footer-tagline{color:var(--text-muted);}
+ .footer-tagline span{color:var(--purple);}
+
+ /* MODALS */
+ .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;}
+ .modal-overlay.open{display:flex;}
+ .modal{background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:24px;width:100%;max-width:540px;overflow:hidden;animation:modalIn 0.3s ease;box-shadow:0 24px 60px rgba(0,0,0,0.15);}
+ @keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+ .modal-header{padding:24px 28px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;}
+ .modal-header h3{font-size:17px;font-weight:600;}
+ .modal-close{background:var(--glass);border:1px solid var(--glass-border);color:var(--text-muted);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+ .modal-close:hover{color:var(--text);background:var(--glass-hover);}
+ .modal-body{padding:28px;}
+
+ /* CHAT MODAL */
+ .chat-messages{height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;margin-bottom:20px;padding-right:4px;}
+ .chat-messages::-webkit-scrollbar{width:4px;}
+ .chat-messages::-webkit-scrollbar-track{background:transparent;}
+ .chat-messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+ .chat-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.55;}
+ .chat-msg.ai{background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.12);color:#3b1f6e;align-self:flex-start;border-bottom-left-radius:4px;}
+ .chat-msg.user{background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.12);color:#831843;align-self:flex-end;border-bottom-right-radius:4px;}
+ .chat-input-row{display:flex;gap:10px;}
+ .chat-input{flex:1;background:rgba(0,0,0,0.03);border:1px solid rgba(0,0,0,0.1);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;font-family:'Sora',sans-serif;outline:none;transition:border-color 0.2s;}
+ .chat-input:focus{border-color:rgba(124,58,237,0.4);}
+ .chat-input::placeholder{color:var(--text-dim);}
+ .chat-send{background:linear-gradient(135deg,var(--purple),var(--pink));border:none;color:white;width:44px;height:44px;border-radius:12px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+ .chat-send:hover{transform:scale(1.05);}
+
+ /* AGE SELECTOR MODAL */
+ .age-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+ .age-select-item{background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;text-align:center;}
+ .age-select-item:hover,.age-select-item.sel{border-color:var(--purple-light);background:rgba(124,58,237,0.1);}
+ .age-select-item .age-emoji{font-size:28px;margin-bottom:8px;}
+ .age-select-item h4{font-size:14px;font-weight:600;}
+ .age-select-item p{font-size:11px;color:var(--text-muted);margin-top:3px;}
+
+ /* TOAST */
+ .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:14px 24px;font-size:14px;z-index:99999;transition:transform 0.3s;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+ .toast.show{transform:translateX(-50%) translateY(0);}
+ .toast.success{border-color:rgba(16,185,129,0.3);}
+ .toast.success .t-icon{color:#10b981;}
+
+ /* ANIMATIONS */
+ @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+ .reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease;}
+ .reveal.visible{opacity:1;transform:translateY(0);}
+
+ /* SCROLLBAR */
+ ::-webkit-scrollbar{width:6px;}
+ ::-webkit-scrollbar-track{background:#f0f0f4;}
+ ::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.25);border-radius:3px;}
+ ::-webkit-scrollbar-thumb:hover{background:rgba(124,58,237,0.45);}
+
+ /* HINDI MODE */
+ body.hindi-mode .hero-title .line1::after{content:' — मन का सेतु';}
+
+ /* RESPONSIVE */
+ @media(max-width:900px){
+ nav{padding:14px 20px;}
+ .nav-links{display:none;}
+ .hero{padding:100px 24px 60px;}
+ .hero-preview{grid-template-columns:1fr;}
+ .features-grid{grid-template-columns:1fr 1fr;}
+ .youth-grid{grid-template-columns:1fr 1fr;}
+ .age-content.active{grid-template-columns:1fr;}
+ .ngo-body{grid-template-columns:1fr;}
+ .therapist-grid{grid-template-columns:1fr 1fr;}
+ .community-grid{grid-template-columns:1fr;}
+ .wellness-grid{grid-template-columns:1fr 1fr;}
+ .footer-grid{grid-template-columns:1fr 1fr;}
+ .features,.features-grid,.youth-grid,.therapy-section,.wellness-section{padding-left:24px;padding-right:24px;}
+ .age-section,.ngo-section,.community-section,.wellness-section,.gamify-section,.cta-section,.emergency-section{padding-left:24px;padding-right:24px;}
+ .trust-strip{gap:24px;padding:20px 24px;}
+ .footer-grid{padding:0 24px;}
+ footer{padding:40px 24px 30px;}
+ }
+ @media(max-width:600px){
+ .features-grid{grid-template-columns:1fr;}
+ .youth-grid{grid-template-columns:1fr;}
+ .therapist-grid{grid-template-columns:1fr;}
+ .wellness-grid{grid-template-columns:1fr;}
+ .ngo-body{grid-template-columns:1fr;}
+ .age-select-grid{grid-template-columns:1fr;}
+ .gamify-row{flex-direction:column;}
+ .footer-grid{grid-template-columns:1fr;}
+ .footer-bottom{flex-direction:column;gap:8px;text-align:center;}
+ .hero-ctas{flex-direction:column;align-items:center;}
+ }
+  /* Playful Kids Theme */
+  .kids-theme {
+    background: radial-gradient(circle at top left, #ffe4e1, #e0ffff);
+    border-radius: 30px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(255,105,180,0.2);
+    border: 4px solid #fff;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+    color: #4a4a4a;
+    display: none; /* hidden by default like other age-content */
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .kids-theme.active {
+    display: flex !important;
+  }
+  .kids-world {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .kids-header h2 {
+    font-size: 34px;
+    margin-bottom: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .rainbow-text {
+    background: linear-gradient(45deg, #ff0000, #ff7f00, #ffca00, #00cd00, #0000ff, #4b0082, #8b00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .kids-header p {
+    font-size: 18px;
+    color: #ff69b4;
+    font-weight: bold;
+    margin-bottom: 30px;
+  }
+  .kids-mood-board {
+    background: rgba(255,255,255,0.85);
+    border-radius: 20px;
+    padding: 24px;
+    border: 3px dashed #ffb6c1;
+    margin-bottom: 30px;
+  }
+  .kids-question {
+    font-size: 22px;
+    font-weight: bold;
+    color: #20b2aa;
+    margin-bottom: 20px;
+  }
+  .mood-cards {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .mood-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 15px 25px;
+    border: 3px solid;
+    cursor: pointer;
+    box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateY(0);
+    width: 110px;
+  }
+  .mood-card:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 14px 0 rgba(0,0,0,0.1);
+  }
+  .mood-card:active {
+    transform: translateY(4px);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+  }
+  .mood-card.happy { border-color: #ffd700; color: #daa520; }
+  .mood-card.sad { border-color: #87ceeb; color: #4682b4; }
+  .mood-card.angry { border-color: #ff6347; color: #cd5c5c; }
+  .mood-card.scared { border-color: #dda0dd; color: #8a2be2; }
+  .mood-icon { font-size: 45px; margin-bottom: 8px; animation: bounce 3s infinite; display: inline-block; }
+  .mood-card:hover .mood-icon { animation: bounce 1s infinite; }
+  .mood-label { font-size: 18px; font-weight: bold; }
+  
+  .kids-features {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 35px;
+    flex-wrap: wrap;
+  }
+  .cloud-feature {
+    background: #fff;
+    padding: 14px 28px;
+    border-radius: 50px;
+    box-shadow: 0 6px 15px rgba(135,206,235,0.4);
+    font-size: 16px;
+    font-weight: bold;
+    color: #4682b4;
+    border: 3px solid #e0ffff;
+    animation: float 4s ease-in-out infinite;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .cloud-feature:hover {
+    transform: scale(1.05);
+  }
+  .cloud-feature:nth-child(2) { animation-delay: 1s; }
+  .cloud-feature:nth-child(3) { animation-delay: 2s; }
+  
+  .btn-playful {
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    color: white;
+    font-size: 26px;
+    font-weight: 800;
+    padding: 18px 48px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 0 #c71585, 0 15px 20px rgba(255,20,147,0.4);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: inherit;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+  }
+  .btn-playful:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 0 #c71585, 0 20px 25px rgba(255,20,147,0.5);
+  }
+  .btn-playful:active {
+    transform: translateY(8px);
+    box-shadow: 0 0px 0 #c71585, 0 5px 10px rgba(255,20,147,0.4);
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-15px); }
+    60% { transform: translateY(-7px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- AURORA -->
+<div class="aurora">
+ <div class="aurora-blob a1"></div>
+ <div class="aurora-blob a2"></div>
+ <div class="aurora-blob a3"></div>
+ <div class="aurora-blob a4"></div>
+</div>
+
+<!-- PARTICLES -->
+<canvas id="particles"></canvas>
+
+<!-- NAVBAR -->
+
+<nav style="position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; align-items: center; padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000;">
+    <a href="/index.html" style="font-weight: 800; font-size: 24px; color: #7c3aed; text-decoration: none; margin-right: auto;">ManoSetu</a>
+    <div style="display: flex; gap: 24px;">
+        <a href="/index.html" style="text-decoration: none; color: #7c3aed; font-weight: 600; font-size: 14px;">Home</a>
+        <a href="/wellness.html" style="text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px;">Wellness</a>
+        <a href="/booking.html" style="text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px;">Book Session</a>
+        <a href="/dashboard.html" style="text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px;">Dashboard</a>
+        <a href="/events.html" style="text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px;">Communities</a>
+    </div>
+    <button style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 20px;" onclick="window.location.href='/index.html#sos'">SOS</button>
+    <button style="background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 10px;" onclick="localStorage.clear(); window.location.href='/auth.html'">Logout</button>
+</nav>
+
+
+<!-- HERO -->
+<section class="hero" id="home">
+ <div class="hero-badge"><span class="dot"></span> India's First Age-Adaptive Mental Health Platform</div>
+ <h1 class="hero-title">
+ <span class="line1">Your Mind.</span>
+ <span class="line2">Your Choice.</span>
+ <span class="line3">Your Control.</span>
+ </h1>
+ <p class="hero-subtitle">A safe, anonymous space where young India finds support — through AI, peers, and professionals. Built with care, not code.</p>
+ <div class="hero-ctas">
+ <button class="btn-primary" onclick="window.location.href='/wellness.html'">✦ Get Started Free</button>
+ <button class="btn-ghost" onclick="openChat()"> Talk to AI Now</button>
+ </div>
+ <div class="hero-preview">
+ <div class="preview-card pc1">
+ <div class="card-glow"></div>
+ <div class="card-icon"></div>
+ <h3>AI Companion</h3>
+ <p>CBT + DBT powered support in Hindi & English</p>
+ <div class="mini-chat">
+ <div class="mini-msg ai">Hey! How are you feeling today? </div>
+ <div class="mini-msg user">Stressed about exams...</div>
+ <div class="typing-dots"><span></span><span></span><span></span></div>
+ </div>
+ </div>
+ <div class="preview-card pc2">
+ <div class="card-glow"></div>
+ <div class="card-icon"></div>
+ <h3>Mood Tracker</h3>
+ <p>Daily emotional check-ins with AI insights</p>
+ <div class="mood-mini">
+ <div class="mood-emoji active"></div>
+ <div class="mood-emoji"></div>
+ <div class="mood-emoji"></div>
+ <div class="mood-emoji"></div>
+ <div class="mood-emoji"></div>
+ </div>
+ <div class="mood-bar"><div class="mood-fill"></div></div>
+ <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Wellbeing Score: 72/100</div>
+ </div>
+ <div class="preview-card pc3">
+ <div class="card-glow"></div>
+ <div class="card-icon">️</div>
+ <h3>100% Private</h3>
+ <p>Anonymous identity — no names, no judgement</p>
+ <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+ <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--teal-light);">✓ End-to-end encrypted</div>
+ <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--teal-light);">✓ Zero-knowledge architecture</div>
+ <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--teal-light);">✓ DPDP Act compliant</div>
+ <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--teal-light);">✓ No data sold, ever</div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- TRUST STRIP -->
+<div class="trust-strip reveal">
+ <div class="trust-item"><div class="icon green"></div><div><strong>100% Private</strong><br>DPDP compliant</div></div>
+ <div class="trust-item"><div class="icon blue"></div><div><strong>24/7 AI Support</strong><br>Always here</div></div>
+ <div class="trust-item"><div class="icon purple"></div><div><strong>Hindi + English</strong><br>Bilingual support</div></div>
+ <div class="trust-item"><div class="icon green"></div><div><strong>50,000+ Youth</strong><br>Community members</div></div>
+ <div class="trust-item"><div class="icon blue"></div><div><strong>Early Intervention</strong><br>Real-time alerts</div></div>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+ <div class="section-header reveal">
+ <div class="section-tag">Core Features</div>
+ <h2 class="section-title">Everything You Need,<br><span class="grad">Nothing You Don't</span></h2>
+ <p class="section-desc">Designed for real struggles. Built with empathy. Powered by science.</p>
+ </div>
+ <div class="features-grid reveal">
+ <div class="feature-card" onclick="openChat()">
+ <div class="fc-icon p"></div>
+ <h3>AI Chatbot</h3>
+ <p>CBT & DBT-backed conversations. Context memory. Voice + text. Hindi & English.</p>
+ <span class="fc-tag ai">AI Powered</span>
+ </div>
+ <div class="feature-card" onclick="window.location.href='/wellness.html'">
+  <div class="fc-icon pi"></div>
+  <h3>Mood Analytics</h3>
+ <p>Daily tracking, mental health scores, pattern detection, AI-generated insights.</p>
+ <span class="fc-tag new">New</span>
+ </div>
+ <div class="feature-card" onclick="window.location.href='/community.html'">
+  <div class="fc-icon t"></div>
+  <h3>Safe Board</h3>
+ <p>Anonymous message board. Ask questions, get advice from vetted mentors.</p>
+ <span class="fc-tag live">Live</span>
+ </div>
+ <div class="feature-card" onclick="window.location.href='/booking.html'">
+  <div class="fc-icon b">‍️</div>
+  <h3>Support Guides</h3>
+ <p>Talk to approved, friendly guides who understand your journey.</p>
+ <span class="fc-tag new">Verified</span>
+ </div>
+ <div class="feature-card" onclick="window.location.href='/dashboard.html'">
+  <div class="fc-icon p"></div>
+  <h3>Care Center</h3>
+ <p>Live community wellbeing stats for our partners to help you better.</p>
+ <span class="fc-tag ai">Live Data</span>
+ </div>
+ <div class="feature-card" onclick="openSOS()">
+  <div class="fc-icon pi"></div>
+  <h3>Safety Shield</h3>
+ <p>Our smart system monitors for stress signals to keep you safe always.</p>
+ <span class="fc-tag ai">AI Guard</span>
+ </div>
+ <div class="feature-card" onclick="window.location.href='/wellness.html'">
+  <div class="fc-icon t"></div>
+  <h3>Smart Journal</h3>
+ <p>Daily journaling with AI sentiment analysis and mood correlation.</p>
+ <span class="fc-tag new">Private</span>
+ </div>
+ <div class="feature-card" onclick="showToast('Voice activated. Say Hello! 🎙️'); openChat();">
+  <div class="fc-icon b">️</div>
+  <h3>Voice AI</h3>
+ <p>Talk, don't type. Voice-first interactions for accessibility and comfort.</p>
+ <span class="fc-tag ai">Beta</span>
+ </div>
+ </div>
+</section>
+
+<!-- AGE ADAPTIVE -->
+<section class="age-section" id="age">
+ <div class="section-header reveal">
+ <div class="section-tag">Age-Adaptive System</div>
+ <h2 class="section-title">The Platform That<br><span class="grad">Grows With You</span></h2>
+ <p class="section-desc">Every age group sees a different, tailored experience. One platform. Infinite empathy.</p>
+ </div>
+ <div class="age-tabs reveal">
+ <button class="age-tab" onclick="showAge('children',this)"> Children (5–10)</button>
+ <button class="age-tab active" onclick="showAge('teens',this)"> Teens (11–18) </button>
+ 
+ </div>
+ <div class="age-content active" id="age-teens">
+ <div class="age-info">
+ <h2>Safe Space for <span style="background:linear-gradient(135deg,#7c3aed,#ec4899);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Teens</span> </h2>
+ <p>Teens face exam pressure, social anxiety, family stress — all while navigating who they are. ManoSetu creates a judgment-free zone where every feeling is valid.</p>
+ <div class="age-features">
+ <div class="age-feature"><div class="check">✓</div> Anonymous peer support groups</div>
+ <div class="age-feature"><div class="check">✓</div> AI chatbot with friendly, non-clinical tone</div>
+ <div class="age-feature"><div class="check">✓</div> Exam stress & academic pressure tools</div>
+ <div class="age-feature"><div class="check">✓</div> Social anxiety support & confidence building</div>
+ <div class="age-feature"><div class="check">✓</div> Private journaling with mood tracking</div>
+ <div class="age-feature"><div class="check">✓</div> Gamified streaks & mental wellness rewards</div>
+ <div class="age-feature"><div class="check">✓</div> No parental access — full privacy</div>
+ </div>
+ </div>
+ <div class="age-visual">
+ <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+ <span style="font-size:20px;"></span>
+ <div>
+ <div style="font-size:14px;font-weight:600;">Teen Dashboard</div>
+ <div style="font-size:11px;color:var(--text-muted);">Anonymous · Safe · Your space</div>
+ </div>
+ <div class="anon-badge" style="margin:0 0 0 auto;"> Anonymous</div>
+ </div>
+ <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:16px;margin-bottom:12px;">
+ <div style="font-size:12px;color:var(--purple-light);margin-bottom:8px;">Today's Check-in</div>
+ <div style="display:flex;gap:8px;">
+ <div class="mood-emoji active" style="cursor:default;"></div>
+ <div>
+ <div style="font-size:13px;font-weight:500;">Anxious about exams</div>
+ <div style="font-size:11px;color:var(--text-muted);">AI suggests: Breathing exercise</div>
+ </div>
+ </div>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+ <div style="background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.15);border-radius:10px;padding:12px;font-size:12px;text-align:center;">
+ <div style="font-size:22px;margin-bottom:4px;"></div>
+ <div style="font-weight:600;">7 Day Streak</div>
+ <div style="color:var(--text-muted);font-size:10px;">Keep going!</div>
+ </div>
+ <div style="background:rgba(13,148,136,0.1);border:1px solid rgba(13,148,136,0.15);border-radius:10px;padding:12px;font-size:12px;text-align:center;">
+ <div style="font-size:22px;margin-bottom:4px;"></div>
+ <div style="font-weight:600;">3 Peer Chats</div>
+ <div style="color:var(--text-muted);font-size:10px;">This week</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="age-content kids-theme" id="age-children">
+  <div class="kids-world">
+    <div class="kids-header">
+      <h2>🚀 Welcome to Your <span class="rainbow-text">Magical Space!</span> 🌟</h2>
+      <p>Play games, talk to friendly animals, and explore your feelings!</p>
+    </div>
+    
+    <div class="kids-mood-board">
+      <div class="kids-question">How are you feeling today?</div>
+      <div class="mood-cards">
+        <div class="mood-card happy">
+          <div class="mood-icon">😁</div>
+          <div class="mood-label">Happy!</div>
+        </div>
+        <div class="mood-card sad">
+          <div class="mood-icon">😢</div>
+          <div class="mood-label">Sad</div>
+        </div>
+        <div class="mood-card angry">
+          <div class="mood-icon">😡</div>
+          <div class="mood-label">Mad</div>
+        </div>
+        <div class="mood-card scared">
+          <div class="mood-icon">😨</div>
+          <div class="mood-label">Scared</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kids-features">
+      <div class="cloud-feature" onclick="showToast('Loading Voice Buddy... 🐰')">☁️ Talk to Voice Buddy</div>
+      <div class="cloud-feature" onclick="showToast('Loading Feelings Game... 🎯')">🎮 Play a Feeling Game</div>
+      <div class="cloud-feature" onclick="showToast('Opening Magic Story... 📖')">📚 Read a Magic Story</div>
+    </div>
+
+    <button class="btn-playful" onclick="openChat()">Start Adventure! 🎈</button>
+  </div>
+ </div>
+ </div>
+ <div class="age-visual" style="text-align:center;">
+ <div style="font-size:48px;margin-bottom:16px;"></div>
+ <div style="font-size:22px;font-weight:600;margin-bottom:16px;">Hello, Ramesh ji</div>
+ <button style="background:linear-gradient(135deg,var(--teal),#0891b2);color:white;border:none;padding:20px 40px;border-radius:16px;font-size:20px;cursor:pointer;font-family:Sora,sans-serif;font-weight:600;display:flex;align-items:center;gap:10px;margin:0 auto;">
+ ️ Talk to Your Companion
+ </button>
+ <div style="margin-top:16px;font-size:13px;color:var(--text-muted);">Just speak — no typing needed</div>
+ </div>
+ </div>
+</section>
+
+<!-- YOUTH FOCUS -->
+<section class="youth-section" id="youth">
+ <div class="section-header reveal">
+ <div class="section-tag">Youth Focus</div>
+ <h2 class="section-title">Real Problems,<br><span class="grad">Real Support</span></h2>
+ <p class="section-desc">We speak the language of young India's struggles — without judgment, without prescription.</p>
+ </div>
+ <div class="youth-grid reveal">
+ <div class="youth-card">
+ <span class="yc-icon"></span>
+ <h3>Exam Pressure</h3>
+ <p>JEE, NEET, boards — the pressure is real. Learn coping skills and get support 24/7.</p>
+ <button class="btn-talk" onclick="openChat()"> Talk to AI</button>
+ </div>
+ <div class="youth-card">
+ <span class="yc-icon"></span>
+ <h3>Social Anxiety</h3>
+ <p>Fear of judgment, social situations, fitting in. Build confidence step by step.</p>
+ <button class="btn-talk" onclick="openChat()"> Talk to AI</button>
+ </div>
+ <div class="youth-card">
+ <span class="yc-icon"></span>
+ <h3>Family Issues</h3>
+ <p>Pressure, conflict, expectations. A safe place to process without taking sides.</p>
+ <button class="btn-talk" onclick="openChat()"> Talk to AI</button>
+ </div>
+ <div class="youth-card">
+ <span class="yc-icon"></span>
+ <h3>Academic Stress</h3>
+ <p>Performance anxiety, comparison, perfectionism. Reframe your relationship with success.</p>
+ <button class="btn-talk" onclick="openChat()"> Talk to AI</button>
+ </div>
+ </div>
+</section>
+
+<!-- COMMUNITY CARE CENTER (NGO) -->
+<section class="ngo-section" id="ngo">
+ <div class="section-header reveal">
+ <div class="section-tag">Care Partners</div>
+ <h2 class="section-title">Community<br><span class="grad">Care Center</span></h2>
+ <p class="section-desc">We use real-time insights to help NGOs and mentors provide faster, better support.</p>
+ </div>
+ <div class="ngo-dashboard reveal">
+ <div class="ngo-header">
+ <div class="status-dot"></div>
+ <div>
+ <div class="ngo-header-title">Live Community Health Monitor</div>
+ <div class="ngo-header-sub">Vetted Partners Only • <span id="ngo-user-count">...</span> Active Youth • Live View</div>
+ </div>
+ </div>
+ <div class="ngo-body">
+ <div class="ngo-panel" style="background: rgba(255,255,255,0.02);">
+ <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--purple-light);margin-bottom:12px;">The Challenge</div>
+ <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+    ● <b>50%</b> of mental health conditions begin before age 14.<br>
+    ● <b>90%</b> of youth in low-income areas receive no care.<br>
+    ● <b>1 in 7</b> adolescents experience a condition globally.
+ </div>
+ </div>
+ <div class="ngo-panel">
+ <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;">Live Vibe</div>
+ <div class="ngo-stat">
+ <div class="val" id="ngo-vibe-score">...</div>
+ <div class="label">Community Wellness Score</div>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+ <div style="padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.1);border-radius:10px;text-align:center;">
+ <div style="font-size:22px;font-weight:700;color:#fca5a5;" id="ngo-sos-count">0</div>
+ <div style="font-size:10px;color:var(--text-muted);">Active Shields</div>
+ </div>
+ <div style="padding:12px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.1);border-radius:10px;text-align:center;">
+ <div style="font-size:22px;font-weight:700;color:var(--purple-light);" id="ngo-mood-count">0</div>
+ <div style="font-size:10px;color:var(--text-muted);">Mood Logs Today</div>
+ </div>
+ </div>
+ </div>
+ <div class="ngo-panel">
+ <div style="font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:16px;">Stress Heatmap</div>
+ <div class="heatmap" id="heatmap"></div>
+ <div style="margin-top:12px;font-size:11px;color:var(--text-muted);"> Anonymous mood intensity across regional clusters.</div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- COMMUNITY -->
+<section class="community-section" id="community">
+ <div class="section-header reveal">
+ <div class="section-tag">Community</div>
+ <h2 class="section-title">You're Not<br><span class="grad">Alone Here</span></h2>
+ <p class="section-desc">Anonymous peer communities where shared vulnerability becomes shared strength.</p>
+ </div>
+ <div class="community-grid reveal">
+ <div class="community-card">
+ <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+ <h3 style="font-size:16px;font-weight:600;">Support Rooms</h3>
+ <div class="anon-badge" style="margin:0;"> Anonymous</div>
+ </div>
+ <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:4px;">Topic-based rooms with moderation. Safe discussions for every age.</p>
+ <div class="room-list">
+ <div class="room-item">
+ <div class="room-icon" style="background:rgba(124,58,237,0.2);"></div>
+ <div class="room-info"><h4>Exam Warriors</h4><p>For students dealing with academic pressure</p></div>
+ <div class="room-count">342 online</div>
+ </div>
+ <div class="room-item">
+ <div class="room-icon" style="background:rgba(236,72,153,0.2);"></div>
+ <div class="room-info"><h4>Anxiety Support</h4><p>Managing social anxiety together</p></div>
+ <div class="room-count">218 online</div>
+ </div>
+ <div class="room-item">
+ <div class="room-icon" style="background:rgba(13,148,136,0.2);"></div>
+ <div class="room-info"><h4>Night Owls</h4><p>Late night thoughts, we're here</p></div>
+ <div class="room-count">89 online</div>
+ </div>
+ <div class="room-item">
+ <div class="room-icon" style="background:rgba(251,191,36,0.2);"></div>
+ <div class="room-info"><h4>Growth Minds</h4><p>Celebrate small wins together</p></div>
+ <div class="room-count">156 online</div>
+ </div>
+ </div>
+ </div>
+ <div class="community-card">
+ <h3 style="font-size:16px;font-weight:600;margin-bottom:4px;">Peer Mentor Program</h3>
+ <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px;">Trained volunteer mentors who've been through it. Real people, real empathy.</p>
+ <div style="display:flex;flex-direction:column;gap:12px;">
+ <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;">
+ <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;"></div>
+ <div>
+ <div style="font-size:13px;font-weight:600;">Mentor_Aanya</div>
+ <div style="font-size:11px;color:var(--text-muted);">Exam stress · Social anxiety</div>
+ </div>
+ <button style="margin-left:auto;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.2);color:var(--purple-light);padding:6px 14px;border-radius:8px;font-size:11px;font-family:'Sora',sans-serif;cursor:pointer;">Connect</button>
+ </div>
+ <div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.03);border-radius:12px;">
+ <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0d9488,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;"></div>
+ <div>
+ <div style="font-size:13px;font-weight:600;">Mentor_Rohan</div>
+ <div style="font-size:11px;color:var(--text-muted);">Family issues · Career anxiety</div>
+ </div>
+ <button style="margin-left:auto;background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.2);color:var(--purple-light);padding:6px 14px;border-radius:8px;font-size:11px;font-family:'Sora',sans-serif;cursor:pointer;">Connect</button>
+ </div>
+ </div>
+ <div style="margin-top:16px;padding:14px;background:rgba(13,148,136,0.08);border:1px solid rgba(13,148,136,0.15);border-radius:12px;font-size:12px;color:var(--teal-light);">
+ All mentors are trained volunteers, not professionals. For clinical help, see Therapy.
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- THERAPY -->
+<section class="therapy-section" id="therapy">
+ <div class="section-header reveal">
+ <div class="section-tag">Professional Support</div>
+ <h2 class="section-title">Licensed Therapists,<br><span class="grad">Accessible To All</span></h2>
+ <p class="section-desc">Book sessions with verified mental health professionals. Anonymous, affordable, judgment-free.</p>
+ </div>
+ <div class="therapist-grid reveal">
+ <div class="therapist-card">
+ <div class="therapist-avatar" style="background:rgba(124,58,237,0.15);">‍️</div>
+ <h3>Dr. Priya Sharma</h3>
+ <div class="spec">Child & Adolescent Psychology</div>
+ <div class="therapist-tags">
+ <span class="t-tag">Teens</span><span class="t-tag">Anxiety</span><span class="t-tag">CBT</span>
+ </div>
+ <div class="rating"><span class="stars"></span><span style="color:var(--text-muted);"> 4.9 (127)</span></div>
+ <button class="btn-book">Book Session</button>
+ </div>
+ <div class="therapist-card">
+ <div class="therapist-avatar" style="background:rgba(13,148,136,0.15);">‍️</div>
+ <h3>Dr. Arjun Mehta</h3>
+ <div class="spec">Cognitive Behavioral Therapy</div>
+ <div class="therapist-tags">
+ <span class="t-tag">Depression</span><span class="t-tag">Stress</span><span class="t-tag">DBT</span>
+ </div>
+ <div class="rating"><span class="stars"></span><span style="color:var(--text-muted);"> 4.8 (94)</span></div>
+ <button class="btn-book">Book Session</button>
+ </div>
+ <div class="therapist-card">
+ <div class="therapist-avatar" style="background:rgba(236,72,153,0.15);">‍️</div>
+ <h3>Dr. Meera Nair</h3>
+ <div class="spec">Trauma & Family Therapy</div>
+ <div class="therapist-tags">
+ <span class="t-tag">Trauma</span><span class="t-tag">Family</span><span class="t-tag">Hindi</span>
+ </div>
+ <div class="rating"><span class="stars"></span><span style="color:var(--text-muted);"> 4.9 (203)</span></div>
+ <button class="btn-book">Book Session</button>
+ </div>
+ </div>
+</section>
+
+<!-- WELLNESS & TOOLS -->
+<section class="wellness-section" id="wellness">
+ <div class="section-header reveal">
+ <div class="section-tag">Quick Calm</div>
+ <h2 class="section-title">Daily Tools for<br><span class="grad">A Calmer Mind</span></h2>
+ <p class="section-desc">Simple actions you can take right now to feel better.</p>
+ </div>
+ <div class="wellness-grid reveal">
+ <div class="wellness-card" style="text-align:center;">
+  <div class="wc-icon">🌬️</div>
+  <h3>Quick Calm</h3>
+  <p>Follow the circle to slow down your breathing.</p>
+  <div style="margin:20px auto; width:120px; height:120px; border-radius:50%; border:3px solid var(--purple-light); display:flex; align-items:center; justify-content:center; animation: breathingCircle 8s infinite ease-in-out;">
+    <div style="width:20px; height:20px; background:var(--purple); border-radius:50%; opacity:0.6;"></div>
+  </div>
+  <div id="breathTxt" style="font-size:12px; font-weight:600; color:var(--purple-light);">Breathe In...</div>
+ </div>
+ <div class="wellness-card">
+  <div class="wc-icon">📝</div>
+  <h3>My Feelings</h3>
+  <p>Write down how you feel. It's 100% private.</p>
+  <textarea id="journalInput" style="width:100%; height:80px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:10px; padding:10px; color:var(--text); font-size:13px; margin-top:10px; outline:none; resize:none;" placeholder="I feel..."></textarea>
+  <button class="btn-ghost" style="width:100%; margin-top:8px; padding:8px;" onclick="saveJournal()">Save Entry</button>
+ </div>
+ <div class="wellness-card">
+  <div class="wc-icon">🎧</div>
+  <h3>Relaxing Sounds</h3>
+  <p>Listen to nature to help you focus or sleep.</p>
+  <div style="display:flex;gap:6px;margin-top:16px;justify-content:center;">
+  <div style="padding:6px 12px;background:rgba(59,130,246,0.15);border-radius:100px;font-size:11px;color:var(--blue-soft);cursor:pointer;">🌊 Ocean</div>
+  <div style="padding:6px 12px;background:rgba(59,130,246,0.15);border-radius:100px;font-size:11px;color:var(--blue-soft);cursor:pointer;">🌧️ Rain</div>
+  </div>
+ </div>
+ </div>
+</section>
+
+<style>
+@keyframes breathingCircle {
+  0%, 100% { transform: scale(0.6); opacity:0.4; }
+  50% { transform: scale(1.2); opacity:1; }
+}
+</style>
+
+<!-- GAMIFICATION -->
+<section class="gamify-section">
+ <div class="section-header reveal">
+ <div class="section-tag">Gamification</div>
+ <h2 class="section-title">Make Mental Health<br><span class="grad">A Daily Habit</span></h2>
+ </div>
+ <div class="gamify-row reveal">
+ <div class="gamify-card">
+ <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;"> Current Streak</div>
+ <div class="streak-count">14</div>
+ <div class="streak-label">days of self-care</div>
+ <div class="streak-days">
+ <div class="streak-day done">M</div><div class="streak-day done">T</div><div class="streak-day done">W</div>
+ <div class="streak-day done">T</div><div class="streak-day done">F</div><div class="streak-day today">S</div>
+ <div class="streak-day">S</div>
+ </div>
+ <div class="xp-bar-wrap">
+ <div class="xp-label"><span>Level 8 · Seeker</span><span>650 / 1000 XP</span></div>
+ <div class="xp-bar"><div class="xp-fill"></div></div>
+ </div>
+ </div>
+ <div class="gamify-card" style="flex:1.5;">
+ <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;"> Earned Badges</div>
+ <div class="badge-grid">
+ <div class="badge earned"><div class="b-icon"></div><div class="b-name">First Step</div></div>
+ <div class="badge earned"><div class="b-icon"></div><div class="b-name">7-Day Fire</div></div>
+ <div class="badge earned"><div class="b-icon"></div><div class="b-name">Connector</div></div>
+ <div class="badge earned"><div class="b-icon"></div><div class="b-name">Journaler</div></div>
+ <div class="badge earned"><div class="b-icon"></div><div class="b-name">Zen Starter</div></div>
+ <div class="badge"><div class="b-icon"></div><div class="b-name">14-Day ?</div></div>
+ </div>
+ </div>
+ <div class="gamify-card">
+ <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;"> Today's Goals</div>
+ <div style="display:flex;flex-direction:column;gap:8px;">
+ <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:#10b981;">✓</span><span style="text-decoration:line-through;color:var(--text-muted);">Morning check-in</span></div>
+ <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:#10b981;">✓</span><span style="text-decoration:line-through;color:var(--text-muted);">5-min breathing</span></div>
+ <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--text-dim);">○</span><span>Journal entry</span></div>
+ <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--text-dim);">○</span><span>Community post</span></div>
+ </div>
+ <div style="margin-top:14px;padding:10px;background:rgba(124,58,237,0.1);border-radius:10px;font-size:12px;color:var(--purple-light);">
+ +50 XP for completing all goals today 
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- EMERGENCY -->
+<section class="emergency-section" id="emergency">
+ <div class="sos-banner reveal">
+ <div class="sos-icon"></div>
+ <h2>You Are Not Alone.</h2>
+ <p>If you're in crisis, reach out immediately. Our AI and trained counselors are available 24/7. No judgment, just help.</p>
+ <div class="sos-actions">
+ <button class="btn-sos-big" onclick="openSOS()"> Panic Button — Get Help Now</button>
+ <button class="btn-helpline"> iCall: 9152987821</button>
+ <button class="btn-helpline"> SNEHI: 044-24640050</button>
+ </div>
+ <div style="margin-top:24px;font-size:12px;color:rgba(252,165,165,0.5);">Activating sends anonymous alert to nearest NGO partner & counselor</div>
+ </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+ <div class="cta-inner reveal">
+ <h2>Let's Build a World Where<br><span class="grad">Asking for Help is Strength,<br>Not Fear.</span></h2>
+ <p>Join 50,000+ young Indians who've chosen mental wellness. Free, anonymous, always available.</p>
+ <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+ <button class="btn-primary" onclick="window.location.href='/wellness.html'" style="font-size:16px;padding:16px 40px;">✦ Start Your Journey</button>
+ <button class="btn-ghost" style="font-size:15px;padding:16px 32px;"> Download App</button>
+ </div>
+ <div style="margin-top:40px;display:flex;gap:32px;justify-content:center;flex-wrap:wrap;">
+ <div style="text-align:center;">
+ <div style="font-family:'DM Serif Display',serif;font-size:36px;background:linear-gradient(135deg,#7c3aed,#ec4899);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">50K+</div>
+ <div style="font-size:12px;color:var(--text-muted);">Youth Supported</div>
+ </div>
+ <div style="text-align:center;">
+ <div style="font-family:'DM Serif Display',serif;font-size:36px;background:linear-gradient(135deg,#0d9488,#3b82f6);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">200+</div>
+ <div style="font-size:12px;color:var(--text-muted);">NGO Partners</div>
+ </div>
+ <div style="text-align:center;">
+ <div style="font-family:'DM Serif Display',serif;font-size:36px;background:linear-gradient(135deg,#fbbf24,#f97316);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">98%</div>
+ <div style="font-size:12px;color:var(--text-muted);">Feel Less Alone</div>
+ </div>
+ <div style="text-align:center;">
+ <div style="font-family:'DM Serif Display',serif;font-size:36px;background:linear-gradient(135deg,#7c3aed,#ec4899);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">24/7</div>
+ <div style="font-size:12px;color:var(--text-muted);">Always Available</div>
+ </div>
+ </div>
+ </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+ <div class="footer-grid">
+ <div class="footer-brand">
+ <div class="logo"> ManoSetu</div>
+ <p>Building a world where every young Indian can access mental health support — safely, privately, and without stigma.</p>
+ <div style="display:flex;gap:10px;margin-top:16px;">
+ <div style="width:32px;height:32px;background:var(--glass);border:1px solid var(--glass-border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;">𝕏</div>
+ <div style="width:32px;height:32px;background:var(--glass);border:1px solid var(--glass-border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;">in</div>
+ <div style="width:32px;height:32px;background:var(--glass);border:1px solid var(--glass-border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;"></div>
+ </div>
+ </div>
+ <div class="footer-col">
+ <h4>Platform</h4>
+ <a href="#features">AI Chatbot</a>
+ <a href="#features">Mood Tracker</a>
+ <a href="#community">Community</a>
+ <a href="#therapy">Therapy</a>
+ <a href="#wellness">Wellness</a>
+ </div>
+ <div class="footer-col">
+ <h4>Support</h4>
+ <a href="#ngo">For NGOs</a>
+ <a href="#">For Schools</a>
+ <a href="#">For Corporates</a>
+ <a href="#emergency">Crisis Help</a>
+ <a href="#">Help Center</a>
+ </div>
+ <div class="footer-col">
+ <h4>Legal</h4>
+ <a href="#">Privacy Policy</a>
+ <a href="#">Terms of Service</a>
+ <a href="#">DPDP Compliance</a>
+ <a href="#">Accessibility</a>
+ <a href="#">Security</a>
+ </div>
+ </div>
+ <div class="footer-bottom">
+ <div> 2025 ManoSetu. Made with in India.</div>
+ <div class="footer-tagline">Seeking help is <span>strength</span>, not weakness.</div>
+ <div> DPDP Compliant · End-to-End Encrypted</div>
+ </div>
+</footer>
+
+<!-- CHAT MODAL -->
+<div class="modal-overlay" id="chatModal">
+ <div class="modal">
+ <div class="modal-header">
+ <div style="display:flex;align-items:center;gap:10px;">
+ <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;"></div>
+ <div>
+ <h3>ManoSetu AI</h3>
+ <div style="font-size:11px;color:var(--teal-light);">● Online · CBT + DBT</div>
+ </div>
+ </div>
+ <button class="modal-close" onclick="closeModal('chatModal')">✕</button>
+ </div>
+ <div class="modal-body">
+ <div class="chat-messages" id="chatMessages">
+ <div class="chat-msg ai">Namaste I'm your ManoSetu AI companion. This is a safe, anonymous space — I'm here to listen without judgment. How are you feeling today?</div>
+ <div class="chat-msg ai">You can share anything — exam stress, anxiety, family issues, or just how your day went. I understand Hindi and English both </div>
+ </div>
+ <div class="chat-input-row">
+ <input class="chat-input" id="chatInput" placeholder="Type or say something..." onkeydown="handleChatKey(event)">
+ <button class="chat-send" onclick="sendMessage()">➤</button>
+ </div>
+ <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:10px;"> Anonymous & encrypted · Not a substitute for professional help</div>
+ </div>
+ </div>
+</div>
+
+<!-- AGE SELECT MODAL -->
+<div class="modal-overlay" id="ageModal">
+ <div class="modal">
+ <div class="modal-header">
+ <h3> Choose Your Experience</h3>
+ <button class="modal-close" onclick="closeModal('ageModal')">✕</button>
+ </div>
+ <div class="modal-body">
+ <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">ManoSetu adapts to your age group — UI, features, tone, and experience all change to feel right for you.</p>
+ <div class="age-select-grid">
+ <div class="age-select-item" onclick="selectAge(this,'children')">
+ <div class="age-emoji"></div>
+ <h4>Children</h4>
+ <p>Ages 5–10</p>
+ </div>
+ <div class="age-select-item sel" onclick="selectAge(this,'teens')">
+ <div class="age-emoji"></div>
+ <h4>Teen </h4>
+ <p>Ages 11–18</p>
+ </div>
+ <div class="age-select-item" onclick="selectAge(this,'young')">
+ <div class="age-emoji"></div>
+ <h4>Young Adult</h4>
+ <p>Ages 18–25</p>
+ </div>
+ <div class="age-select-item" onclick="selectAge(this,'pro')">
+ <div class="age-emoji">‍</div>
+ <h4>Professional</h4>
+ <p>Ages 25–50</p>
+ </div>
+ </div>
+ <button class="btn-primary" style="width:100%;margin-top:16px;" onclick="confirmAge()">Continue →</button>
+ </div>
+ </div>
+</div>
+
+<!-- SOS MODAL -->
+<div class="modal-overlay" id="sosModal">
+ <div class="modal" style="border-color:rgba(239,68,68,0.3);">
+ <div class="modal-header" style="border-color:rgba(239,68,68,0.2);background:rgba(239,68,68,0.05);">
+ <h3 style="color:#fca5a5;"> Crisis Support</h3>
+ <button class="modal-close" onclick="closeModal('sosModal')">✕</button>
+ </div>
+ <div class="modal-body">
+ <p style="font-size:15px;color:var(--text-muted);margin-bottom:20px;line-height:1.7;">You matter. Help is on the way. Choose how you'd like support right now:</p>
+ <div style="display:flex;flex-direction:column;gap:12px;">
+ <button onclick="triggerSOS('AI_SUPPORT', ' Connecting you to AI support...', openChat)" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:14px;border-radius:12px;font-size:14px;font-family:'Sora',sans-serif;font-weight:600;cursor:pointer;text-align:left;"> Talk to AI companion immediately</button>
+ <button onclick="triggerSOS('HELPLINE', ' Dialing iCall helpline: 9152987821')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;padding:14px;border-radius:12px;font-size:14px;font-family:'Sora',sans-serif;font-weight:600;cursor:pointer;text-align:left;"> Call iCall helpline (9152987821)</button>
+ <button onclick="triggerSOS('NGO_ALERT', ' Anonymous alert sent to nearest NGO counselor.')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;padding:14px;border-radius:12px;font-size:14px;font-family:'Sora',sans-serif;font-weight:600;cursor:pointer;text-align:left;"> Alert nearest NGO counselor (anonymous)</button>
+ </div>
+ <div style="margin-top:20px;padding:14px;background:rgba(13,148,136,0.08);border-radius:12px;font-size:13px;color:var(--teal-light);line-height:1.6;">
+ You are not alone. This feeling will pass. Reaching out takes courage — and you just did it.
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast success" id="toast">
+ <span class="t-icon">✓</span>
+ <span id="toastText">Done!</span>
+</div>
+
+<script>
+// SCROLL PROGRESS
+window.addEventListener('scroll',()=>{
+ const pct=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;
+ document.getElementById('scrollProgress').style.width=pct+'%';
+ const nav=document.getElementById('navbar');
+ nav.classList.toggle('scrolled',window.scrollY>60);
+});
+
+// PARTICLES
+const canvas=document.getElementById('particles');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+const pts=Array.from({length:60},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:Math.random()*1.5+0.5,op:Math.random()*0.4+0.1}));
+function drawParticles(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ pts.forEach(p=>{
+ p.x+=p.vx;p.y+=p.vy;
+ if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;
+ if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+ ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ ctx.fillStyle=`rgba(124,58,237,${p.op * 0.5})`;ctx.fill();
+ });
+ // connections
+ for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+ const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+ if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(124,58,237,${0.05*(1-d/120)})`;ctx.lineWidth=0.5;ctx.stroke();}
+ }
+ requestAnimationFrame(drawParticles);
+}drawParticles();
+
+// HEATMAP
+const heatmap=document.getElementById('heatmap');
+if(heatmap){
+ const levels=['','l1','l1','l2','l2','l3','l4','alert','l1','l2','l3','l1','l2','l1','l4','l2','l1','','l3','l2','alert','l1','l2','l3','l2','l1','l4','l2','l1','l2','l3','l1','l2','l1','l4'];
+ levels.forEach(l=>{const d=document.createElement('div');d.className='heatmap-cell '+(l||'');heatmap.appendChild(d);});
+}
+
+// REVEAL
+const observer=new IntersectionObserver(entries=>{
+ entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// AGE TABS
+function showAge(id,btn){
+ document.querySelectorAll('.age-content').forEach(c=>c.classList.remove('active'));
+ document.querySelectorAll('.age-tab').forEach(b=>b.classList.remove('active'));
+ const el=document.getElementById('age-'+id);
+ if(el)el.classList.add('active');
+ btn.classList.add('active');
+}
+
+// MOOD EMOJI
+document.querySelectorAll('.mood-emoji').forEach(el=>{
+ el.addEventListener('click', async function(){
+ this.closest('.mood-mini').querySelectorAll('.mood-emoji').forEach(e=>e.classList.remove('active'));
+ this.classList.add('active');
+ try {
+ await fetch('/api/mood', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ mood: this.textContent })
+ });
+ } catch(err) { console.error('Mood log error', err); }
+ });
+});
+
+// MODALS
+function openChat(){document.getElementById('chatModal').classList.add('open');}
+function openSOS(){document.getElementById('sosModal').classList.add('open');}
+function openAgeSelect(){document.getElementById('ageModal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// CHAT
+async function sendMessage(){
+ const input=document.getElementById('chatInput');
+ const text=input.value.trim();
+ if(!text)return;
+ const msgs=document.getElementById('chatMessages');
+ const userDiv=document.createElement('div');
+ userDiv.className='chat-msg user';userDiv.textContent=text;msgs.appendChild(userDiv);
+ input.value='';
+ msgs.scrollTop=msgs.scrollHeight;
+ const dots=document.createElement('div');
+ dots.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>';
+ msgs.appendChild(dots);msgs.scrollTop=msgs.scrollHeight;
+ 
+ try {
+ const res = await fetch('/api/chat', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ message: text })
+ });
+ const data = await res.json();
+ dots.remove();
+ const aiDiv=document.createElement('div');
+ aiDiv.className='chat-msg ai';
+ aiDiv.textContent=data.response;
+ msgs.appendChild(aiDiv);msgs.scrollTop=msgs.scrollHeight;
+ } catch (error) {
+ dots.remove();
+ console.error('API Error', error);
+ }
+}
+function handleChatKey(e){if(e.key==='Enter')sendMessage();}
+
+// SOS API HELPER
+async function triggerSOS(type, msg, callback) {
+ showToast(msg);
+ closeModal('sosModal');
+ if (callback) callback();
+ try {
+ await fetch('/api/sos', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ type })
+ });
+ } catch(e) { console.error('SOS Error', e); }
+}
+
+// AGE SELECT
+let selectedAge='teens';
+function selectAge(el,age){
+ document.querySelectorAll('.age-select-item').forEach(i=>i.classList.remove('sel'));
+ el.classList.add('sel');selectedAge=age;
+}
+function confirmAge(){
+ closeModal('ageModal');
+ showToast(` Experience set for ${selectedAge === 'teens'?'Teens':selectedAge==='children'?'Children':selectedAge==='young'?'Young Adults':selectedAge==='pro'?'Professionals':'Seniors'}!`);
+ // scroll to age section and show selected
+ document.getElementById('age').scrollIntoView({behavior:'smooth'});
+ document.querySelectorAll('.age-tab').forEach(t=>{
+ if(t.textContent.toLowerCase().includes(selectedAge)||
+ (selectedAge==='young'&&t.textContent.includes('Young'))||
+ (selectedAge==='pro'&&t.textContent.includes('Pro'))||
+ (selectedAge==='elder'&&t.textContent.includes('Elderly'))){
+ t.click();
+ }
+ });
+}
+
+// LANG TOGGLE
+function toggleLang(btn){
+ const isHindi=btn.textContent.includes('HI');
+ btn.textContent=isHindi?' EN':' HI';
+ if(!isHindi){
+ document.querySelector('.hero-title .line1').textContent='आपका मन।';
+ document.querySelector('.hero-title .line2').textContent='आपका डेटा।';
+ document.querySelector('.hero-title .line3').textContent='आपका नियंत्रण।';
+ document.querySelector('.hero-subtitle').textContent='एक सुरक्षित, गुमनाम जगह जहाँ युवा भारत को सहयोग मिलता है — AI, साथियों और विशेषज्ञों के माध्यम से।';
+ showToast(' Hindi mode enabled · हिंदी मोड सक्रिय');
+ }else{
+ document.querySelector('.hero-title .line1').textContent='Your Mind.';
+ document.querySelector('.hero-title .line2').textContent='Your Data.';
+ document.querySelector('.hero-title .line3').textContent='Your Control.';
+ document.querySelector('.hero-subtitle').textContent="A safe, anonymous space where young India finds support — through AI, peers, and professionals. Built with care, not code.";
+ showToast(' English mode enabled');
+ }
+}
+
+// TOAST
+function showToast(msg){
+ const t=document.getElementById('toast');
+ document.getElementById('toastText').textContent=msg;
+ t.classList.add('show');
+ setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// BAR CHART HOVER
+document.querySelectorAll('.bar').forEach(b=>{
+ b.title='Click for details';
+ b.addEventListener('click',()=>showToast(' Weekly trend data — full analytics in dashboard'));
+});
+
+// BOOK SESSION
+document.querySelectorAll('.btn-book').forEach(b=>{
+ b.addEventListener('click',()=>showToast(' Booking system coming soon! Join waitlist.'));
+});
+
+
+// --- HACKATHON FINAL LOGIC ---
+
+// 1. Auth & Safety Shield Check
+(function checkAuth() {
+    const token = localStorage.getItem('x-session-token');
+    const user = localStorage.getItem('manosetu-username');
+    if (!token && !window.location.pathname.includes('auth.html')) {
+        window.location.href = '/auth.html';
+    }
+})();
+
+// 2. Community Care Center (Live Stats)
+async function refreshNGO() {
+    try {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+        if (data.success) {
+            if(document.getElementById('ngo-user-count')) document.getElementById('ngo-user-count').textContent = data.stats.totalUsers || 0;
+            if(document.getElementById('ngo-sos-count')) document.getElementById('ngo-sos-count').textContent = data.stats.totalSosAlerts || 0;
+            if(document.getElementById('ngo-mood-count')) document.getElementById('ngo-mood-count').textContent = data.stats.totalMoodLogs || 0;
+            if(document.getElementById('ngo-vibe-score')) document.getElementById('ngo-vibe-score').textContent = '74';
+        }
+    } catch(e) { console.warn('Syncing Care Center data...'); }
+}
+setInterval(refreshNGO, 10000); refreshNGO();
+
+// 3. My Feelings (Private Journal)
+async function saveJournal() {
+    const input = document.getElementById('journalInput');
+    const content = input?.value.trim();
+    if (!content) return showToast('Please write something first! 📝');
+    
+    try {
+        const res = await fetch('/api/journal', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem('x-session-token')
+            },
+            body: JSON.stringify({ content })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(' 🛡️ Entry saved safely and privately.');
+            input.value = '';
+        }
+    } catch(e) { showToast(' Error saving entry.'); }
+}
+
+// 4. Quick Calm (Breathing Tool)
+const breathTxt = document.getElementById('breathTxt');
+if (breathTxt) {
+    const steps = ['Breathe In...', 'Hold...', 'Breathe Out...', 'Relax...'];
+    let i = 0;
+    setInterval(() => {
+        i = (i + 1) % 4;
+        breathTxt.textContent = steps[i];
+    }, 2000);
+}
+
+// 5. Global Scroll Helper
+function scrollTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+// WELLNESS CARD
+document.querySelectorAll('.wellness-card').forEach(c=>{
+ c.addEventListener('click',()=>showToast(' Session starting... Stay with your breath.'));
+});
+</script>
+</body>
+</html>

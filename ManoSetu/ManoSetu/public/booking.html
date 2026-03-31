@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    const token = localStorage.getItem('x-session-token');
+    if (!token && !window.location.pathname.includes('auth.html')) window.location.href = '/auth.html';
+    
+    // Interceptor
+    const originalFetch = window.fetch;
+    window.fetch = async function() {
+        let [resource, config] = arguments;
+        if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/auth')) {
+            config = config || {}; config.headers = config.headers || {};
+            config.headers['x-session-token'] = localStorage.getItem('x-session-token') || '';
+        }
+        return originalFetch(resource, config);
+    };
+</script>
+
+    <meta charset="UTF-8"><title>ManoSetu - Book a Session</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+body { font-family: 'Sora', sans-serif; background: #f8f9fc; color: #1a1a2e; margin: 0; padding-top: 80px; }
+nav { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; align-items: center; padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+.logo { font-weight: 800; font-size: 24px; color: #7c3aed; text-decoration: none; margin-right: auto; }
+.nav-links { display: flex; gap: 24px; }
+.nav-links a { text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px; }
+.nav-links a.active { color: #7c3aed; }
+.btn-sos { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 20px; }
+.container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+.card { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 24px; }
+.btn { background: #7c3aed; color: white; padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #475569; }
+    input, select { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 15px; }
+    </style>
+</head>
+<body>
+    
+<nav>
+    <a href="/index.html" class="logo">ManoSetu</a>
+    <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/wellness.html">Wellness</a>
+        <a href="/community.html">Safe Board</a>
+        <a href="/events.html">Communities</a>
+        <a href="/booking.html">Book Session</a>
+        <a href="/dashboard.html" id="dashLink">Dashboard</a>
+    </div>
+    <button class="btn-sos" onclick="alert('Emergency signals sent. Help is on the way.')">SOS</button>
+    <button style="background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 10px;" onclick="localStorage.clear(); window.location.href='/auth.html'">Logout</button>
+</nav>
+
+    <div class="container" style="max-width: 600px;">
+        <div class="card">
+            <h1 style="margin-bottom: 24px;">Book a Session</h1>
+            <div class="form-group">
+                <label>Your Full Name</label>
+                <input type="text" id="name" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label>Session Type</label>
+                <select id="type">
+                    <option>Stress & School</option>
+                    <option>Friendships & Social</option>
+                    <option>General Talk</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Requested Date</label>
+                <input type="date" id="date">
+            </div>
+            <button class="btn" style="width: 100%;" onclick="bookNow()">Confirm Booking</button>
+        </div>
+        <div id="confirmation" class="card" style="display: none; background: #f0fdf4; border: 1px solid #bbfcbd; text-align: center;">
+            <p style="color: #166534; font-weight: 600;">✨ Booking Confirmed! We'll reach out to your guardian/support guide shortly.</p>
+        </div>
+    </div>
+    <script>
+        function bookNow() { 
+            const d = document.getElementById('confirmation');
+            d.style.display = 'block';
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    </script>
+</body>
+</html>

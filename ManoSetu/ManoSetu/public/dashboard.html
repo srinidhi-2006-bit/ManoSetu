@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    const token = localStorage.getItem('x-session-token');
+    if (!token && !window.location.pathname.includes('auth.html')) window.location.href = '/auth.html';
+    
+    // Interceptor
+    const originalFetch = window.fetch;
+    window.fetch = async function() {
+        let [resource, config] = arguments;
+        if (typeof resource === 'string' && resource.startsWith('/api/') && !resource.startsWith('/api/auth')) {
+            config = config || {}; config.headers = config.headers || {};
+            config.headers['x-session-token'] = localStorage.getItem('x-session-token') || '';
+        }
+        return originalFetch(resource, config);
+    };
+</script>
+
+    <meta charset="UTF-8"><title>ManoSetu - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+body { font-family: 'Sora', sans-serif; background: #f8f9fc; color: #1a1a2e; margin: 0; padding-top: 80px; }
+nav { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; align-items: center; padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+.logo { font-weight: 800; font-size: 24px; color: #7c3aed; text-decoration: none; margin-right: auto; }
+.nav-links { display: flex; gap: 24px; }
+.nav-links a { text-decoration: none; color: #64748b; font-weight: 500; font-size: 14px; }
+.nav-links a.active { color: #7c3aed; }
+.btn-sos { background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 20px; }
+.container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+.card { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 24px; }
+.btn { background: #7c3aed; color: white; padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 32px; }
+    .stat-label { font-size: 14px; color: #64748b; margin-bottom: 4px; }
+    .stat-value { font-size: 32px; font-weight: 800; color: #7c3aed; }
+    #adminView, #userView, #doctorView { display: none; }
+    
+    /* ADMIN DARK MODE */
+    .admin-body { background: #0f172a; color: #f8fafc; }
+    .admin-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+    .admin-stat { color: #8b5cf6 !important; text-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+    
+    /* DOCTOR CLINICAL MODE */
+    .doctor-body { background: #f0f9ff; }
+    .doctor-card { border-left: 4px solid #0369a1; background: white; }
+    .doctor-btn { background: #0369a1; }
+
+</style>
+</head>
+<body>
+    
+<nav>
+    <a href="/index.html" class="logo">ManoSetu</a>
+    <div class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/wellness.html">Wellness</a>
+        <a href="/community.html">Safe Board</a>
+        <a href="/events.html">Communities</a>
+        <a href="/booking.html">Book Session</a>
+        <a href="/dashboard.html" id="dashLink">Dashboard</a>
+    </div>
+    <button class="btn-sos" onclick="alert('Emergency signals sent. Help is on the way.')">SOS</button>
+    <button style="background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-left: 10px;" onclick="localStorage.clear(); window.location.href='/auth.html'">Logout</button>
+</nav>
+
+    <div class="container">
+        <h1 id="greeting">Welcome to your Dashboard</h1>
+        
+        <div id="userView">
+            <div class="grid">
+                <div class="card"><p class="stat-label">Mood Streak</p><p class="stat-value">5 Days</p></div>
+                <div class="card"><p class="stat-label">Upcoming Sessions</p><p class="stat-value">1</p></div>
+                <div class="card"><p class="stat-label">Unseen Answers</p><p class="stat-value">3</p></div>
+            </div>
+            <div class="card" style="margin-top: 40px;">
+                <h3>My Recent Activities</h3>
+                <p style="color: #64748b;">Checked in "Very Happy" · Posted on Safe Board · Completed Session with Dr. Priya</p>
+            </div>
+        </div>
+
+        <div id="doctorView">
+            <div class="card">
+                <h2>Clinical Oversight</h2>
+                <div class="grid">
+                    <div class="card" style="box-shadow: none; border: 1px solid #f1f5f9;"><p class="stat-label">Assigned Patients</p><p class="stat-value">12</p></div>
+                    <div class="card" style="box-shadow: none; border: 1px solid #f1f5f9;"><p class="stat-label">Sessions Today</p><p class="stat-value">4</p></div>
+                </div>
+                <h3 style="margin-top: 32px;">Patient Log</h3>
+                <p>User_A12 - Stress Management · Feb 22, 10:00 AM</p>
+                <p>Youth_88 - General Anxiety · Feb 22, 11:30 AM</p>
+            </div>
+        </div>
+
+        <div id="adminView">
+            <div class="card" style="background: #1a1a2e; color: white;">
+                <h2 style="color: #c4b5fd;">Platform-Wide Statistics</h2>
+                <div class="grid">
+                    <div class="card" style="background: rgba(255,255,255,0.1); border: none; color: white;"><p class="stat-label" style="color: #94a3b8;">Total Users</p><p class="stat-value" style="color: #c4b5fd;">1,240</p></div>
+                    <div class="card" style="background: rgba(255,255,255,0.1); border: none; color: white;"><p class="stat-label" style="color: #94a3b8;">SOS Alerts</p><p class="stat-value" style="color: #fca5a5;">4</p></div>
+                    <div class="card" style="background: rgba(255,255,255,0.1); border: none; color: white;"><p class="stat-label" style="color: #94a3b8;">Doctor Count</p><p class="stat-value" style="color: #fbcf33;">18</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        
+    const role = localStorage.getItem('manosetu-role') || 'user';
+    const name = localStorage.getItem('manosetu-username') || 'Member';
+    document.getElementById('greeting').textContent = 'Hi ' + name + ', welcome back!';
+    
+    if (role === 'admin') {
+        document.body.classList.add('admin-body');
+        document.getElementById('adminView').style.display = 'block';
+        document.querySelectorAll('.card').forEach(c => c.classList.add('admin-card'));
+        document.querySelectorAll('.stat-value').forEach(s => s.classList.add('admin-stat'));
+    } else if (role === 'doctor') {
+        document.body.classList.add('doctor-body');
+        document.getElementById('doctorView').style.display = 'block';
+        document.querySelectorAll('.card').forEach(c => c.classList.add('doctor-card'));
+    } else {
+        document.getElementById('userView').style.display = 'block';
+    }
+
+    </script>
+</body>
+</html>
