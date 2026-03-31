@@ -69,9 +69,9 @@ ManoSetu provides:
 ## 🛠️ Tech Stack
 
 * Frontend: (e.g., React / HTML / CSS / JS)
-* Backend: (Node.js / Firebase / etc.)
+* Backend: (Node.js / Express.js etc.)
 * AI/ML: (NLP models / sentiment analysis)
-* Database: (MongoDB / Firestore / etc.)
+* Database: (MongoDB)
 
 ---
 
